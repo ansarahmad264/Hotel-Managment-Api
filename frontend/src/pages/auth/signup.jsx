@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const SignupPage = () => {
-
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -14,7 +14,7 @@ const SignupPage = () => {
 
   const [alert, setAlert] = useState({
     show: false,
-    type: "error", // "error" | "success"
+    type: "error",
     message: "",
   });
 
@@ -53,9 +53,7 @@ const SignupPage = () => {
       name,
       email,
       password,
-      // uncomment or adjust if your backend expects these:
-      // phone,
-      // restaurantName: name,
+      phone,
     };
 
     try {
@@ -64,42 +62,29 @@ const SignupPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        // If signup also sets cookies, you can include credentials:
-        // credentials: "include",
         body: JSON.stringify(payload),
       });
 
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        const msg =
-          data.message ||
-          data.error ||
-          "Signup failed. Please check your details.";
+        const msg = data.message || data.error || "Signup failed. Please check your details.";
         showAlert(msg, "error");
       } else {
-        showAlert(
-          "Account created successfully! Redirecting to login...",
-          "success"
-        );
+        showAlert("Account created successfully! Redirecting to login...", "success");
         setTimeout(() => {
-          // If you're using React Router, you can use navigate('/restaurant-login') instead
-          window.location.href = "/restaurant-login";
+          navigate("/signin");
         }, 1500);
       }
     } catch (err) {
       console.error(err);
-      showAlert(
-        "Unable to reach the server. Please make sure the backend is running.",
-        "error"
-      );
+      showAlert("Unable to reach the server. Please make sure the backend is running.", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  const alertBaseClasses =
-    "mt-4 rounded-xl border px-4 py-3 text-sm transition-colors";
+  const alertBaseClasses = "mt-4 rounded-xl border px-4 py-3 text-sm transition-colors";
   const alertVariantClasses =
     alert.type === "success"
       ? "border-emerald-500/60 bg-emerald-500/10 text-emerald-200"
@@ -107,22 +92,16 @@ const SignupPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      {/* Background gradient */}
-      <div
-        className="pointer-events-none fixed inset-0 opacity-60"
-        aria-hidden="true"
-      >
+      <div className="pointer-events-none fixed inset-0 opacity-60" aria-hidden="true">
         <div className="absolute inset-x-0 top-[-10%] mx-auto h-[300px] max-w-3xl rounded-full bg-gradient-to-r from-emerald-400 to-amber-400 blur-3xl" />
       </div>
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto flex w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-slate-900/80 shadow-2xl ring-1 ring-slate-800 backdrop-blur-xl md:flex-row">
-          {/* Left / Branding */}
           <div className="flex flex-1 flex-col justify-between bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 px-8 py-10 md:px-10 lg:px-12">
             <div className="fade-in-up">
               <div className="mb-6 inline-flex items-center gap-2">
                 <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400">
-                  {/* Simple logo icon */}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-6 w-6"
@@ -131,91 +110,70 @@ const SignupPage = () => {
                     stroke="currentColor"
                     strokeWidth="1.6"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M4 6h16M4 10h16M10 14h10M4 18h10"
-                    />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M10 14h10M4 18h10" />
                   </svg>
                 </span>
-                <span className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">
-                  DineFlow
-                </span>
+                <span className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">DineFlow</span>
               </div>
 
               <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-                Create your{" "}
-                <span className="text-emerald-400">Restaurant Account</span>
+                Create your <span className="text-emerald-400">Restaurant Account</span>
               </h1>
               <p className="mt-4 max-w-md text-sm text-slate-300 sm:text-base">
-                Join DineFlow and start accepting online orders from your
-                customers. Set up your restaurant in just a few minutes.
+                Join DineFlow and start accepting online orders from your customers. Set up your restaurant in just a few
+                minutes.
               </p>
 
               <ul className="mt-8 space-y-3 text-sm text-slate-200">
-                <li className="flex items-start gap-3">
-                  <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/10 text-xs text-emerald-400">
-                    ✓
-                  </span>
-                  <span>Showcase your full menu with photos and pricing.</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/10 text-xs text-emerald-400">
-                    ✓
-                  </span>
-                  <span>Receive real-time orders from mobile app users.</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/10 text-xs text-emerald-400">
-                    ✓
-                  </span>
-                  <span>
-                    Manage availability, timings, and delivery options.
-                  </span>
-                </li>
+                {[
+                  "Showcase your full menu with photos and pricing.",
+                  "Receive real-time orders from mobile app users.",
+                  "Manage availability, timings, and delivery options.",
+                ].map((item) => (
+                  <li className="flex items-start gap-3" key={item}>
+                    <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/10 text-xs text-emerald-400">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className="h-3.5 w-3.5"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" />
+                      </svg>
+                    </span>
+                    <span>{item}</span>
+                  </li>
+                ))}
               </ul>
             </div>
 
             <p className="mt-8 text-xs text-slate-500">
               Already have an account?{" "}
-              <a
-                href="/restaurant-login"
-                className="font-medium text-emerald-400 hover:text-emerald-300"
-              >
+              <Link to="/signin" className="font-medium text-emerald-400 hover:text-emerald-300">
                 Log in here
-              </a>
+              </Link>
               .
             </p>
           </div>
 
-          {/* Right / Signup form */}
           <div className="flex w-full flex-1 items-center justify-center bg-slate-900/70 px-6 py-10 sm:px-10 md:max-w-md lg:max-w-lg">
             <div className="w-full max-w-md fade-in-up">
-              <h2 className="text-xl font-semibold text-slate-100 sm:text-2xl">
-                Sign up your restaurant 🍽️
-              </h2>
+              <h2 className="text-xl font-semibold text-slate-100 sm:text-2xl">Sign up your restaurant</h2>
               <p className="mt-1 text-sm text-slate-400">
-                Fill in the details below to create your restaurant admin
-                account.
+                Fill in the details below to create your restaurant admin account.
               </p>
 
-              {/* Alert */}
               {alert.show && (
-                <div
-                  className={`${alertBaseClasses} ${alertVariantClasses}`}
-                  role="alert"
-                >
+                <div className={`${alertBaseClasses} ${alertVariantClasses}`} role="alert">
                   {alert.message}
                 </div>
               )}
 
               <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-                {/* Restaurant Name */}
                 <div>
-                  <label
-                    htmlFor="name"
-                    className="mb-1.5 block text-sm font-medium text-slate-200"
-                  >
+                  <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-slate-200">
                     Restaurant Name
                   </label>
                   <input
@@ -229,12 +187,8 @@ const SignupPage = () => {
                   />
                 </div>
 
-                {/* Email */}
                 <div>
-                  <label
-                    htmlFor="email"
-                    className="mb-1.5 block text-sm font-medium text-slate-200"
-                  >
+                  <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-200">
                     Email
                   </label>
                   <div className="relative">
@@ -262,12 +216,8 @@ const SignupPage = () => {
                   </div>
                 </div>
 
-                {/* Password */}
                 <div>
-                  <label
-                    htmlFor="password"
-                    className="mb-1.5 block text-sm font-medium text-slate-200"
-                  >
+                  <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-200">
                     Password
                   </label>
                   <input
@@ -282,12 +232,8 @@ const SignupPage = () => {
                   />
                 </div>
 
-                {/* Confirm Password */}
                 <div>
-                  <label
-                    htmlFor="confirmPassword"
-                    className="mb-1.5 block text-sm font-medium text-slate-200"
-                  >
+                  <label htmlFor="confirmPassword" className="mb-1.5 block text-sm font-medium text-slate-200">
                     Confirm Password
                   </label>
                   <input
@@ -302,12 +248,8 @@ const SignupPage = () => {
                   />
                 </div>
 
-                {/* Phone (optional) */}
                 <div>
-                  <label
-                    htmlFor="phone"
-                    className="mb-1.5 block text-sm font-medium text-slate-200"
-                  >
+                  <label htmlFor="phone" className="mb-1.5 block text-sm font-medium text-slate-200">
                     Phone (optional)
                   </label>
                   <input
@@ -320,7 +262,6 @@ const SignupPage = () => {
                   />
                 </div>
 
-                {/* Terms */}
                 <div className="flex items-start gap-3 text-xs text-slate-400">
                   <input
                     type="checkbox"
@@ -331,23 +272,18 @@ const SignupPage = () => {
                     required
                   />
                   <label htmlFor="terms">
-                    I agree to the{" "}
-                    <span className="text-slate-200">Terms & Conditions</span>{" "}
-                    and{" "}
+                    I agree to the <span className="text-slate-200">Terms & Conditions</span> and{" "}
                     <span className="text-slate-200">Privacy Policy</span>.
                   </label>
                 </div>
 
-                {/* Submit */}
                 <button
                   type="submit"
                   id="signup-button"
                   disabled={loading}
                   className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  <span id="signup-button-text">
-                    {loading ? "Creating account..." : "Create account"}
-                  </span>
+                  <span id="signup-button-text">{loading ? "Creating account..." : "Create account"}</span>
                   {loading && (
                     <svg
                       id="signup-spinner"
@@ -356,14 +292,7 @@ const SignupPage = () => {
                       fill="none"
                       viewBox="0 0 24 24"
                     >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path
                         className="opacity-75"
                         fill="currentColor"
@@ -375,10 +304,7 @@ const SignupPage = () => {
 
                 <p className="text-xs text-slate-500">
                   Already registered?{" "}
-                  <Link
-                    to="/signin"
-                    className="font-medium text-emerald-400 hover:text-emerald-300"
-                  >
+                  <Link to="/signin" className="font-medium text-emerald-400 hover:text-emerald-300">
                     Log in to your account
                   </Link>
                   .
