@@ -103,4 +103,33 @@ export default class RestaurantService {
         }
     }
 
+    static async addItem(name, description, price, restaurantId, imageUrl) {
+
+        try {
+            const newItem = await db.FoodItem.create({ name, description, price, restaurantId, imageUrl })
+
+            if (!newItem) {
+                return {
+                    success: false,
+                    statusCode: 500,
+                    message: 'Something went wrong while adding Food item',
+                }
+            }
+
+            return {
+                success: true,
+                statusCode: 201,
+                data: newItem,
+            };
+        } catch (error) {
+            console.error("Error in RestaurantService.loginRestaurant:", error);
+
+            return {
+                success: false,
+                statusCode: 500,
+                message: "Internal server error",
+            };
+        }
+    }
+
 }

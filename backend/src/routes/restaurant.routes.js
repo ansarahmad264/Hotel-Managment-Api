@@ -1,12 +1,16 @@
 
 import express from 'express';
-import { createRestaurant, loginRestaurant } from '../controllers/restaurants.controller.js';
-import { validateBody } from '../middlewares/validate.js';
+import { addFoodItem, createRestaurant, loginRestaurant } from '../controllers/restaurants.controller.js';
 import { restaurantSignupSchema, restaurantLoginSchema} from '../validators/restaurantValidator.js';
+import { validateBody } from '../middlewares/validate.js';
+import { upload } from '../middlewares/multer.js';
+import { verifyJWT } from '../middlewares/protect.js';
 
 const router = express.Router();
 
 router.post('/signup', validateBody(restaurantSignupSchema), createRestaurant);
-router.post('/signin', validateBody(restaurantLoginSchema), loginRestaurant)
+router.post('/signin', validateBody(restaurantLoginSchema), loginRestaurant);
+
+router.post('/add-item',verifyJWT, upload.single("imageUrl"), addFoodItem)
 
 export default router;
