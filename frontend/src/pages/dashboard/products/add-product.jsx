@@ -2,14 +2,22 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
 import AddProductSchema from "./validation";
-import { apiClient } from "@/config";
+import { AddProductApi } from "@/services/product/product.services";
+import { useAuthStore } from "@/store/auth.slice";
+import { toast } from "sonner";
 
 const AddProduct = () => {
+  // navigate
   const navigate = useNavigate();
+  // preview
   const [preview, setPreview] = useState(null);
+  // file input key
   const [fileInputKey, setFileInputKey] = useState(0);
+
+  const user = useAuthStore((state) => state.user);
+
+  console.log("user----", user);
 
   const {
     register,
@@ -20,9 +28,9 @@ const AddProduct = () => {
   } = useForm({
     resolver: zodResolver(AddProductSchema),
     defaultValues: {
-      name: "",
-      description: "",
-      price: "",
+      name: "Truffle Pasta",
+      description: "  Short summary for guests and couriers.",
+      price: 12.5,
       image: undefined,
     },
   });
@@ -38,30 +46,40 @@ const AddProduct = () => {
       setPreview(null);
     }
   };
+
   const handleReset = () => {
     reset();
     setPreview(null);
     setFileInputKey((key) => key + 1); // forces file input to reset without touching refs
   };
 
-  const handleFormSubmit = async (values) => {
-    await new Promise((resolve) => setTimeout(resolve, 400));
+  console.log("user--", user);
 
+  const handleFormSubmit = async (values) => {
     const formData = new FormData();
     formData.append("name", values.name);
     formData.append("description", values.description || "");
     formData.append("price", String(values.price));
     formData.append("image", values.image);
 
-    console.log(formData);
+    console.log("values--", values);
+
+    if (!values.image) {
+      console.log("image is required");
+      return;
+    }
+
+    if (!user?.id) {
+      console.log("user or restaurant id is required");
+      return;
+    }
     // add item
     try {
-      const response = await apiClient.post("add-item", formData);
-      console.log("response", response);
-      const { data } = response;
+      const response = await AddProductApi(user?.id, formData);
+      console.log("response from product---", response);
       // success
-      if (data.success) {
-        toast.success(data.message, {
+      if (response?.success) {
+        toast.success(response?.message, {
           description: `${values.name} ($${values.price})`,
         });
         handleReset();

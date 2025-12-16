@@ -1,10 +1,9 @@
+import { useAuthStore } from "@/store/auth.slice";
 import React from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "../context/auth";
 
 const ProtectedRoute = ({ children }) => {
-  // is authenticated
-  const { isAuthenticated } = useAuth();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const location = useLocation();
 
   if (!isAuthenticated) {

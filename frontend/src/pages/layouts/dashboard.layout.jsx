@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/auth";
+import { useAuthStore } from "@/store/auth.slice";
 
 const navItems = [
   { label: "Home", to: "/dashboard/home", icon: "home" },
@@ -18,8 +18,10 @@ const iconPaths = {
 };
 
 const DashboardLayout = () => {
-  // user
-  const { user, logout } = useAuth();
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+
+  console.log("userrr---", user);
   // navigate
   const navigate = useNavigate();
   // location
@@ -29,6 +31,7 @@ const DashboardLayout = () => {
     if (typeof window === "undefined") return true;
     return window.matchMedia("(min-width: 1024px)").matches;
   });
+
   // sidebar open
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     if (typeof window === "undefined") return true;

@@ -1,22 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { apiClient } from "../../config";
-import { useAuth } from "../../context/auth";
+import { useAuthStore } from "@/store/auth.slice";
+import { toast } from "sonner";
+import { SignInApi } from "@/services/auth/auth.services";
 
 const SignInPage = () => {
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
+  // isAuthenticated
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  // set-user
+  const setUser = useAuthStore((state) => state.setUser);
 
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     remember: false,
-  });
-
-  const [alert, setAlert] = useState({
-    show: false,
-    type: "error",
-    message: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -35,33 +33,22 @@ const SignInPage = () => {
     }));
   };
 
-  const showAlert = (message, type = "error") => {
-    setAlert({ show: true, type, message });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setAlert({ show: false });
-
+    // extract the fields
     const { email, password } = formData;
 
     try {
-      const response = await apiClient.post("/signin", { email, password });
-      const userPayload = response?.data?.user ||
-        response?.data || { email, name: "Manager" };
-
-      login(userPayload);
-      showAlert("Login successful! Redirecting...", "success");
-
-      setTimeout(() => {
-        navigate("/dashboard", { replace: true });
-      }, 800);
+      const response = await SignInApi({ email, password });
+      console.log("response--", response);
+      if (response?.success) {
+        console.log("Setting user:", response?.data?.restaurant);
+        setUser(response?.data?.restaurant);
+        toast.success(response.message || "Login successful!");
+      }
     } catch (error) {
-      showAlert(
-        error?.message || "Server is not reachable. Check backend.",
-        "error"
-      );
+      toast.error(error.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
     }
