@@ -5,8 +5,16 @@ import DashboardLayout from "./pages/layouts/dashboard.layout";
 import AuthLayout from "./pages/layouts/auth.layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
-import Home from "./pages/dashboard/home";
-import { useAuth } from "./context/AuthContext";
+import { useAuth } from "./context/auth";
+import { lazy } from "react";
+
+const Home = lazy(() => import("./pages/dashboard/home"));
+const Orders = lazy(() => import("./pages/dashboard/orders/orders"));
+const Products = lazy(() => import("./pages/dashboard/products/products"));
+const Users = lazy(() => import("./pages/dashboard/users/users"));
+const AddProduct = lazy(() =>
+  import("./pages/dashboard/products/add-product")
+);
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -25,7 +33,10 @@ function App() {
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<Navigate to="/dashboard/home" replace />} />
           <Route path="home" element={<Home />} />
-          <Route path="orders" element={<Home />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="products" element={<Products />} />
+          <Route path="products/add" element={<AddProduct />} />
+          <Route path="users" element={<Users />} />
         </Route>
       </Route>
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiClient } from "../../config";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/auth";
 
 const SignInPage = () => {
   const navigate = useNavigate();
@@ -48,8 +48,8 @@ const SignInPage = () => {
 
     try {
       const response = await apiClient.post("/signin", { email, password });
-      const userPayload =
-        response?.data?.user || response?.data || { email, name: "Manager" };
+      const userPayload = response?.data?.user ||
+        response?.data || { email, name: "Manager" };
 
       login(userPayload);
       showAlert("Login successful! Redirecting...", "success");
@@ -58,7 +58,10 @@ const SignInPage = () => {
         navigate("/dashboard", { replace: true });
       }, 800);
     } catch (error) {
-      showAlert("Server is not reachable. Check backend.", "error");
+      showAlert(
+        error?.message || "Server is not reachable. Check backend.",
+        "error"
+      );
     } finally {
       setLoading(false);
     }
@@ -76,12 +79,12 @@ const SignInPage = () => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="pointer-events-none fixed inset-0 opacity-60">
-        <div className="absolute inset-x-0 top-[-10%] mx-auto h-[300px] max-w-3xl rounded-full bg-gradient-to-r from-emerald-400 to-amber-400 blur-3xl" />
+        <div className="absolute inset-x-0 top-[-10%] mx-auto h-[300px] max-w-3xl rounded-full bg-linear-to-r from-emerald-400 to-amber-400 blur-3xl" />
       </div>
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-8">
         <div className="mx-auto flex w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-slate-900/80 shadow-2xl ring-1 ring-slate-800 backdrop-blur-xl md:flex-row">
-          <div className="flex flex-1 flex-col justify-between bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 px-8 py-10">
+          <div className="flex flex-1 flex-col justify-between bg-linear-to-br from-slate-900 via-slate-950 to-slate-900 px-8 py-10">
             <div className="fade-in-up">
               <div className="mb-6 inline-flex items-center gap-2">
                 <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400">
@@ -93,7 +96,11 @@ const SignInPage = () => {
                     stroke="currentColor"
                     strokeWidth="1.6"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M10 14h10M4 18h10" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 6h16M4 10h16M10 14h10M4 18h10"
+                    />
                   </svg>
                 </span>
                 <span className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">
@@ -106,14 +113,24 @@ const SignInPage = () => {
               </h1>
 
               <p className="mt-4 max-w-md text-sm text-slate-300">
-                Manage your menu, track orders, and communicate with customers through one powerful dashboard.
+                Manage your menu, track orders, and communicate with customers
+                through one powerful dashboard.
               </p>
 
               <dl className="mt-8 space-y-4 text-sm text-slate-200">
                 {[
-                  { title: "Real-time Orders", desc: "Receive and process orders instantly." },
-                  { title: "Easy Menu Control", desc: "Edit menu anytime with a click." },
-                  { title: "Mobile App Ready", desc: "Works with your customer app." },
+                  {
+                    title: "Real-time Orders",
+                    desc: "Receive and process orders instantly.",
+                  },
+                  {
+                    title: "Easy Menu Control",
+                    desc: "Edit menu anytime with a click.",
+                  },
+                  {
+                    title: "Mobile App Ready",
+                    desc: "Works with your customer app.",
+                  },
                 ].map((item) => (
                   <div className="flex items-start gap-3" key={item.title}>
                     <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/10 text-xs text-emerald-400">
@@ -125,7 +142,11 @@ const SignInPage = () => {
                         strokeWidth="2"
                         className="h-3.5 w-3.5"
                       >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="m5 13 4 4L19 7"
+                        />
                       </svg>
                     </span>
                     <div>
@@ -139,20 +160,32 @@ const SignInPage = () => {
 
             <p className="mt-8 text-xs text-slate-500">
               Need help?
-              <span className="font-medium text-slate-300"> support@dineflow.app </span>
+              <span className="font-medium text-slate-300">
+                {" "}
+                support@dineflow.app{" "}
+              </span>
             </p>
           </div>
 
           <div className="flex w-full flex-1 items-center justify-center bg-slate-900/70 px-6 py-10">
             <div className="w-full max-w-md fade-in-up">
-              <h2 className="text-xl font-semibold text-slate-100">Welcome back, Chef</h2>
-              <p className="mt-1 text-sm text-slate-400">Log in to your dashboard below.</p>
+              <h2 className="text-xl font-semibold text-slate-100">
+                Welcome back, Chef
+              </h2>
+              <p className="mt-1 text-sm text-slate-400">
+                Log in to your dashboard below.
+              </p>
 
-              {alert.show && <div className={alertClasses}>{alert.message}</div>}
+              {alert.show && (
+                <div className={alertClasses}>{alert.message}</div>
+              )}
 
               <form onSubmit={handleSubmit} className="mt-6 space-y-5">
                 <div>
-                  <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-200">
+                  <label
+                    htmlFor="email"
+                    className="mb-1.5 block text-sm font-medium text-slate-200"
+                  >
                     Email
                   </label>
                   <div className="relative">
@@ -181,7 +214,10 @@ const SignInPage = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-200">
+                  <label
+                    htmlFor="password"
+                    className="mb-1.5 block text-sm font-medium text-slate-200"
+                  >
                     Password
                   </label>
                   <div className="relative">
@@ -209,7 +245,10 @@ const SignInPage = () => {
                     <span>Keep me logged in</span>
                   </label>
 
-                  <Link className="text-xs font-medium text-emerald-400 hover:text-emerald-300" to="#">
+                  <Link
+                    className="text-xs font-medium text-emerald-400 hover:text-emerald-300"
+                    to="#"
+                  >
                     Forgot password?
                   </Link>
                 </div>
@@ -228,7 +267,14 @@ const SignInPage = () => {
                       fill="none"
                       viewBox="0 0 24 24"
                     >
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
                       <path
                         className="opacity-75"
                         fill="currentColor"
@@ -240,7 +286,10 @@ const SignInPage = () => {
 
                 <p className="text-xs text-slate-500">
                   Do not have an account?{" "}
-                  <Link to="/signup" className="font-medium text-emerald-400 hover:text-emerald-300">
+                  <Link
+                    to="/signup"
+                    className="font-medium text-emerald-400 hover:text-emerald-300"
+                  >
                     Sign up here
                   </Link>
                 </p>
