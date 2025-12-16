@@ -1,10 +1,11 @@
 // src/controller/restaurant.controller.js
 import RestaurantService from '../service/restaurant.service.js';
+import { uploadOnCloudinary } from '../utils/Cloudinary.js';
 
 export const createRestaurant = async (req, res) => {
     try {
-        console.log("req body---in controller--",req.body);
-        
+        console.log("req body---in controller--", req.body);
+
         const { name, email, password } = req.body;
 
         const response = await RestaurantService.createRestaurant(
@@ -39,10 +40,10 @@ export const loginRestaurant = async (req, res) => {
         const cookieOptions = {
             httpOnly: true
         }
-        console.log("responsible", response)
+
         return res.status(response.statusCode)
-        .cookie('accessToken', response.data?.accessToken, cookieOptions)
-        .json(response);
+            .cookie('accessToken', response.data?.accessToken, cookieOptions)
+            .json(response);
 
     } catch (error) {
         console.error("Error logging in restaurant:", error);
@@ -54,3 +55,39 @@ export const loginRestaurant = async (req, res) => {
         });
     }
 };
+
+export const addFoodItem = async (req, res) => {
+
+    const { resturantId } = req.params
+
+    const { name, description, price } = req.body;
+
+    //IMAGE FUNCTIONALITY
+    const profilePicLocalpath = req.file?.path
+    let imageUrl;
+
+    if (profilePicLocalpath) {
+
+        const profilePicture = await uploadOnCloudinary(profilePicLocalpath)
+
+        if (!profilePicture.url) {
+            throw new ApiError(400, "Error while uploading the file")
+        }
+
+        imageUrl = profilePicture.url
+    }
+
+    let resturantObj = new RestaurantService();
+
+    let response = resturantObj.addItem(name, description, price, resturantId, imageUrl)
+
+    return res
+        .status(response.statusCode)
+        .json({
+            success: true,
+            statusCode: 200,
+            message: 'Item Added Successfully',
+            data: response
+        });
+
+}
