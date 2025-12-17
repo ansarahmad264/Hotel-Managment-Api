@@ -1,12 +1,45 @@
+import { GetProductsApi } from "@/services/product/product.services";
+import { useAuthStore } from "@/store/auth.slice";
 import React from "react";
+import { use } from "react";
 import { useNavigate } from "react-router-dom";
 
 const products = [
-  { name: "Charcoal Burger", category: "Mains", price: "$14.50", stock: 12, status: "Active" },
-  { name: "Truffle Pasta", category: "Mains", price: "$18.00", stock: 24, status: "Active" },
-  { name: "Citrus Cooler", category: "Beverages", price: "$7.00", stock: 0, status: "Inactive" },
-  { name: "Matcha Cheesecake", category: "Dessert", price: "$9.20", stock: 9, status: "Low stock" },
-  { name: "Falafel Wrap", category: "Mains", price: "$11.00", stock: 15, status: "Active" },
+  {
+    name: "Charcoal Burger",
+    category: "Mains",
+    price: "$14.50",
+    stock: 12,
+    status: "Active",
+  },
+  {
+    name: "Truffle Pasta",
+    category: "Mains",
+    price: "$18.00",
+    stock: 24,
+    status: "Active",
+  },
+  {
+    name: "Citrus Cooler",
+    category: "Beverages",
+    price: "$7.00",
+    stock: 0,
+    status: "Inactive",
+  },
+  {
+    name: "Matcha Cheesecake",
+    category: "Dessert",
+    price: "$9.20",
+    stock: 9,
+    status: "Low stock",
+  },
+  {
+    name: "Falafel Wrap",
+    category: "Mains",
+    price: "$11.00",
+    stock: 15,
+    status: "Active",
+  },
 ];
 
 const statusStyles = {
@@ -22,7 +55,16 @@ const summary = [
 ];
 
 const Products = () => {
+  // navigate
   const navigate = useNavigate();
+
+  const user = useAuthStore((state) => state.user);
+  console.log("user---", user);
+
+  // products
+  const results = use(GetProductsApi(user.id));
+  console.log("productss000", results);
+
   return (
     <div className="space-y-8">
       <section className="grid gap-4 sm:grid-cols-3">
@@ -86,7 +128,8 @@ const Products = () => {
                 <div>
                   <span
                     className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${
-                      statusStyles[item.status] || "bg-slate-100 text-slate-700 ring-slate-200"
+                      statusStyles[item.status] ||
+                      "bg-slate-100 text-slate-700 ring-slate-200"
                     }`}
                   >
                     {item.status}

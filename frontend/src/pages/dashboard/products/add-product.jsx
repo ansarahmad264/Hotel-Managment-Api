@@ -82,7 +82,6 @@ const AddProduct = () => {
         toast.success(response?.message, {
           description: `${values.name} ($${values.price})`,
         });
-        handleReset();
       }
     } catch (error) {
       console.log("error", error);
