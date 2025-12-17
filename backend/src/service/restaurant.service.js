@@ -1,4 +1,5 @@
 // src/service/restaurant.service.js
+import { where } from 'sequelize';
 import db from '../models/index.js';
 
 export default class RestaurantService {
@@ -164,6 +165,28 @@ export default class RestaurantService {
             statusCode: 201,
             data: items,
         };
+    }
+
+    static async deleteItemById(id) {
+
+        const item = await db.FoodItem.findOne({ where: { id: id } })
+
+        if (item) {
+            
+            await item.destroy();
+            
+            return {
+                success: true,
+                statusCode: 200,
+                messsage: "item deleted successfully"
+            }
+        }
+
+        return {
+            success: false,
+            statusCode: 404,
+            messgae: "item not found"
+        }
     }
 
 }
