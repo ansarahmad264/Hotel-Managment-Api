@@ -11,7 +11,7 @@ const router = express.Router();
 router.post('/signup', validateBody(restaurantSignupSchema), createRestaurant);
 router.post('/signin', validateBody(restaurantLoginSchema), loginRestaurant);
 
-router.post('/add-item/:id',verifyJWT, upload.single("imageUrl"), addFoodItem)
+router.post('/add-item/:id',verifyJWT, upload.single("image"), addFoodItem)
 router.post('/signout', verifyJWT, logoutResturant)
 
 export default router;
