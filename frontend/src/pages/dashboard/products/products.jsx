@@ -1,46 +1,47 @@
 import { GetProductsApi } from "@/services/product/product.services";
 import { useAuthStore } from "@/store/auth.slice";
 import React from "react";
-import { use } from "react";
+import { useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const products = [
-  {
-    name: "Charcoal Burger",
-    category: "Mains",
-    price: "$14.50",
-    stock: 12,
-    status: "Active",
-  },
-  {
-    name: "Truffle Pasta",
-    category: "Mains",
-    price: "$18.00",
-    stock: 24,
-    status: "Active",
-  },
-  {
-    name: "Citrus Cooler",
-    category: "Beverages",
-    price: "$7.00",
-    stock: 0,
-    status: "Inactive",
-  },
-  {
-    name: "Matcha Cheesecake",
-    category: "Dessert",
-    price: "$9.20",
-    stock: 9,
-    status: "Low stock",
-  },
-  {
-    name: "Falafel Wrap",
-    category: "Mains",
-    price: "$11.00",
-    stock: 15,
-    status: "Active",
-  },
-];
+// const products = [
+//   {
+//     name: "Charcoal Burger",
+//     category: "Mains",
+//     price: "$14.50",
+//     stock: 12,
+//     status: "Active",
+//   },
+//   {
+//     name: "Truffle Pasta",
+//     category: "Mains",
+//     price: "$18.00",
+//     stock: 24,
+//     status: "Active",
+//   },
+//   {
+//     name: "Citrus Cooler",
+//     category: "Beverages",
+//     price: "$7.00",
+//     stock: 0,
+//     status: "Inactive",
+//   },
+//   {
+//     name: "Matcha Cheesecake",
+//     category: "Dessert",
+//     price: "$9.20",
+//     stock: 9,
+//     status: "Low stock",
+//   },
+//   {
+//     name: "Falafel Wrap",
+//     category: "Mains",
+//     price: "$11.00",
+//     stock: 15,
+//     status: "Active",
+//   },
+// ];
 
 const statusStyles = {
   Active: "bg-emerald-50 text-emerald-700 ring-emerald-100",
@@ -57,13 +58,30 @@ const summary = [
 const Products = () => {
   // navigate
   const navigate = useNavigate();
-
-  const user = useAuthStore((state) => state.user);
-  console.log("user---", user);
-
   // products
-  const results = use(GetProductsApi(user.id));
-  console.log("productss000", results);
+  const [products, setProducts] = useState([]);
+  // user
+  const user = useAuthStore((state) => state.user);
+  // fetch products
+  const fetchProducts = async () => {
+    try {
+      const response = await GetProductsApi(user.id);
+      console.log("responseseee--", response);
+
+      // success
+      if (response?.success && response?.data?.length > 0) {
+        setProducts(response?.data);
+      } else {
+        setProducts([]);
+      }
+    } catch (error) {
+      console.log("Error--", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
   return (
     <div className="space-y-8">
