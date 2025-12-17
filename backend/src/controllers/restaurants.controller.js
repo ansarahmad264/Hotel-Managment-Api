@@ -130,12 +130,7 @@ export const GetFoodItemByRestaurantID = async (req, res) => {
 
         return res
             .status(response.statusCode)
-            .json({
-                success: true,
-                statusCode: 200,
-                message: 'Items Fetched Successfully',
-                data: response
-            });
+            .json(response);
 
     } catch (error) {
         console.error("Could not get products", error);
