@@ -124,7 +124,7 @@ export const GetFoodItemByRestaurantID = async (req, res) => {
     try {
         const { id } = req.params
 
-        const response = await RestaurantService.getItemsByID(id)
+        const response = await RestaurantService.getItemsByRestaurantID(id)
 
         console.log(response)
 
@@ -133,7 +133,7 @@ export const GetFoodItemByRestaurantID = async (req, res) => {
             .json({
                 success: true,
                 statusCode: 200,
-                message: 'Item Added Successfully',
+                message: 'Items Fetched Successfully',
                 data: response
             });
 

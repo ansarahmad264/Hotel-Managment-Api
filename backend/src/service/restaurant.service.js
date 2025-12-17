@@ -149,7 +149,7 @@ export default class RestaurantService {
 
     static async getItemsByRestaurantID(id) {
 
-        const items = await db.FoodItem.find({ where: { restaurantId: id } })
+        const items = await db.FoodItem.findAll({ where: { restaurantId: id } })
 
         if (!items) {
             return {
