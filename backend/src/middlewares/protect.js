@@ -1,7 +1,5 @@
 import jwt from "jsonwebtoken";
 import db from "../models/index.js";
-import jwt from 'jsonwebtoken'
-import db from '../models/index.js'
 
 export const verifyJWT = async (req, res, next) => {
   try {
