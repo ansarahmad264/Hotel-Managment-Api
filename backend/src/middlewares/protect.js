@@ -1,9 +1,13 @@
+import jwt from "jsonwebtoken";
+import db from "../models/index.js";
 import jwt from 'jsonwebtoken'
 import db from '../models/index.js'
 
 export const verifyJWT = async (req, res, next) => {
-    try {
-        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "")
+  try {
+    const token =
+      req.cookies?.accessToken ||
+      req.header("Authorization")?.replace("Bearer ", "");
 
         if (!token) {
             return res
@@ -29,9 +33,10 @@ export const verifyJWT = async (req, res, next) => {
 
         console.error('JWT verification failed:', error.message);
 
-        return res
-            .status(401)
-            .json({ success: false, statusCode: 401, message: 'Invalid or expired token' });
-    }
-
-}
+    return res.status(401).json({
+      success: false,
+      statusCode: 401,
+      message: "Invalid or expired token",
+    });
+  }
+};

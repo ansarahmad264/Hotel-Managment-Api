@@ -1,8 +1,12 @@
+import { SignUpApi } from "@/services/auth/auth.services";
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const SignupPage = () => {
+  // navigate
   const navigate = useNavigate();
+  // formdata
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -57,34 +61,25 @@ const SignupPage = () => {
     };
 
     try {
-      const response = await fetch("http://localhost:8080/v1/api/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        const msg = data.message || data.error || "Signup failed. Please check your details.";
-        showAlert(msg, "error");
-      } else {
-        showAlert("Account created successfully! Redirecting to login...", "success");
+      const response = await SignUpApi(payload);
+      console.log("response--", response);
+      if (response?.success) {
+        console.log("Setting user:", response?.data?.restaurant);
+        toast.success(response.message || "Signup successful!");
+        // redirect
         setTimeout(() => {
           navigate("/signin");
-        }, 1500);
+        }, 800);
       }
-    } catch (err) {
-      console.error(err);
-      showAlert("Unable to reach the server. Please make sure the backend is running.", "error");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Signup failed");
     } finally {
       setLoading(false);
     }
   };
 
-  const alertBaseClasses = "mt-4 rounded-xl border px-4 py-3 text-sm transition-colors";
+  const alertBaseClasses =
+    "mt-4 rounded-xl border px-4 py-3 text-sm transition-colors";
   const alertVariantClasses =
     alert.type === "success"
       ? "border-emerald-500/60 bg-emerald-500/10 text-emerald-200"
@@ -92,7 +87,10 @@ const SignupPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="pointer-events-none fixed inset-0 opacity-60" aria-hidden="true">
+      <div
+        className="pointer-events-none fixed inset-0 opacity-60"
+        aria-hidden="true"
+      >
         <div className="absolute inset-x-0 top-[-10%] mx-auto h-[300px] max-w-3xl rounded-full bg-gradient-to-r from-emerald-400 to-amber-400 blur-3xl" />
       </div>
 
@@ -110,18 +108,25 @@ const SignupPage = () => {
                     stroke="currentColor"
                     strokeWidth="1.6"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M10 14h10M4 18h10" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 6h16M4 10h16M10 14h10M4 18h10"
+                    />
                   </svg>
                 </span>
-                <span className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">DineFlow</span>
+                <span className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">
+                  DineFlow
+                </span>
               </div>
 
               <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-                Create your <span className="text-emerald-400">Restaurant Account</span>
+                Create your{" "}
+                <span className="text-emerald-400">Restaurant Account</span>
               </h1>
               <p className="mt-4 max-w-md text-sm text-slate-300 sm:text-base">
-                Join DineFlow and start accepting online orders from your customers. Set up your restaurant in just a few
-                minutes.
+                Join DineFlow and start accepting online orders from your
+                customers. Set up your restaurant in just a few minutes.
               </p>
 
               <ul className="mt-8 space-y-3 text-sm text-slate-200">
@@ -140,7 +145,11 @@ const SignupPage = () => {
                         strokeWidth="2"
                         className="h-3.5 w-3.5"
                       >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="m5 13 4 4L19 7"
+                        />
                       </svg>
                     </span>
                     <span>{item}</span>
@@ -151,7 +160,10 @@ const SignupPage = () => {
 
             <p className="mt-8 text-xs text-slate-500">
               Already have an account?{" "}
-              <Link to="/signin" className="font-medium text-emerald-400 hover:text-emerald-300">
+              <Link
+                to="/signin"
+                className="font-medium text-emerald-400 hover:text-emerald-300"
+              >
                 Log in here
               </Link>
               .
@@ -160,20 +172,29 @@ const SignupPage = () => {
 
           <div className="flex w-full flex-1 items-center justify-center bg-slate-900/70 px-6 py-10 sm:px-10 md:max-w-md lg:max-w-lg">
             <div className="w-full max-w-md fade-in-up">
-              <h2 className="text-xl font-semibold text-slate-100 sm:text-2xl">Sign up your restaurant</h2>
+              <h2 className="text-xl font-semibold text-slate-100 sm:text-2xl">
+                Sign up your restaurant
+              </h2>
               <p className="mt-1 text-sm text-slate-400">
-                Fill in the details below to create your restaurant admin account.
+                Fill in the details below to create your restaurant admin
+                account.
               </p>
 
               {alert.show && (
-                <div className={`${alertBaseClasses} ${alertVariantClasses}`} role="alert">
+                <div
+                  className={`${alertBaseClasses} ${alertVariantClasses}`}
+                  role="alert"
+                >
                   {alert.message}
                 </div>
               )}
 
               <form onSubmit={handleSubmit} className="mt-6 space-y-5">
                 <div>
-                  <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-slate-200">
+                  <label
+                    htmlFor="name"
+                    className="mb-1.5 block text-sm font-medium text-slate-200"
+                  >
                     Restaurant Name
                   </label>
                   <input
@@ -188,7 +209,10 @@ const SignupPage = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-200">
+                  <label
+                    htmlFor="email"
+                    className="mb-1.5 block text-sm font-medium text-slate-200"
+                  >
                     Email
                   </label>
                   <div className="relative">
@@ -217,7 +241,10 @@ const SignupPage = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-200">
+                  <label
+                    htmlFor="password"
+                    className="mb-1.5 block text-sm font-medium text-slate-200"
+                  >
                     Password
                   </label>
                   <input
@@ -233,7 +260,10 @@ const SignupPage = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="confirmPassword" className="mb-1.5 block text-sm font-medium text-slate-200">
+                  <label
+                    htmlFor="confirmPassword"
+                    className="mb-1.5 block text-sm font-medium text-slate-200"
+                  >
                     Confirm Password
                   </label>
                   <input
@@ -249,7 +279,10 @@ const SignupPage = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="phone" className="mb-1.5 block text-sm font-medium text-slate-200">
+                  <label
+                    htmlFor="phone"
+                    className="mb-1.5 block text-sm font-medium text-slate-200"
+                  >
                     Phone (optional)
                   </label>
                   <input
@@ -272,8 +305,9 @@ const SignupPage = () => {
                     required
                   />
                   <label htmlFor="terms">
-                    I agree to the <span className="text-slate-200">Terms & Conditions</span> and{" "}
-                    <span className="text-slate-200">Privacy Policy</span>.
+                    I agree to the{" "}
+                    <span className="text-slate-200">Terms & Conditions</span>{" "}
+                    and <span className="text-slate-200">Privacy Policy</span>.
                   </label>
                 </div>
 
@@ -283,7 +317,9 @@ const SignupPage = () => {
                   disabled={loading}
                   className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  <span id="signup-button-text">{loading ? "Creating account..." : "Create account"}</span>
+                  <span id="signup-button-text">
+                    {loading ? "Creating account..." : "Create account"}
+                  </span>
                   {loading && (
                     <svg
                       id="signup-spinner"
@@ -292,7 +328,14 @@ const SignupPage = () => {
                       fill="none"
                       viewBox="0 0 24 24"
                     >
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
                       <path
                         className="opacity-75"
                         fill="currentColor"
@@ -304,7 +347,10 @@ const SignupPage = () => {
 
                 <p className="text-xs text-slate-500">
                   Already registered?{" "}
-                  <Link to="/signin" className="font-medium text-emerald-400 hover:text-emerald-300">
+                  <Link
+                    to="/signin"
+                    className="font-medium text-emerald-400 hover:text-emerald-300"
+                  >
                     Log in to your account
                   </Link>
                   .

@@ -1,9 +1,10 @@
 import React from "react";
+import { useAuthStore } from "@/store/auth.slice";
 import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 
 const PublicRoute = ({ redirectTo = "/dashboard" }) => {
-  const { isAuthenticated } = useAuth();
+  // is authenticated
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   if (isAuthenticated) {
     return <Navigate to={redirectTo} replace />;
