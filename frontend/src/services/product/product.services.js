@@ -35,7 +35,7 @@ export const GetProductApi = async (id, restauarantId) => {
 // Add Product Api Service
 export const DeleteProductApi = async (id) => {
   try {
-    const response = await apiClient.delete(`/product/${id}`);
+    const response = await apiClient.delete(`/delete/${id}`);
     return response.data;
   } catch (error) {
     return error.response ? error.response.data : null;
