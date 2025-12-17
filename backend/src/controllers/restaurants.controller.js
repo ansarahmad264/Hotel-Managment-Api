@@ -116,5 +116,35 @@ export const addFoodItem = async (req, res) => {
             message: 'Item Added Successfully',
             data: response
         });
-        
+
+}
+
+export const GetFoodItemByRestaurantID = async (req, res) => {
+
+    try {
+        const { id } = req.params
+
+        const response = await RestaurantService.getItemsByID(id)
+
+        console.log(response)
+
+        return res
+            .status(response.statusCode)
+            .json({
+                success: true,
+                statusCode: 200,
+                message: 'Item Added Successfully',
+                data: response
+            });
+
+    } catch (error) {
+        console.error("Could not get products", error);
+
+        return res.status(500).json({
+            success: false,
+            statusCode: 500,
+            message: "Internal server error",
+        });
+    }
+
 }

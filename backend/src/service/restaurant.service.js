@@ -147,4 +147,23 @@ export default class RestaurantService {
         }
     }
 
+    static async getItemsByRestaurantID(id) {
+
+        const items = await db.FoodItem.find({ where: { restaurantId: id } })
+
+        if (!items) {
+            return {
+                success: false,
+                statusCode: 500,
+                message: 'no Items found',
+            }
+        }
+
+        return {
+            success: true,
+            statusCode: 201,
+            data: items,
+        };
+    }
+
 }
