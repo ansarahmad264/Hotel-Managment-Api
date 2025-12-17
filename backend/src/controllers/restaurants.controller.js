@@ -126,8 +126,6 @@ export const GetFoodItemByRestaurantID = async (req, res) => {
 
         const response = await RestaurantService.getItemsByRestaurantID(id)
 
-        console.log(response)
-
         return res
             .status(response.statusCode)
             .json(response);
