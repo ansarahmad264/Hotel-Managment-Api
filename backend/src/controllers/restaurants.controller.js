@@ -141,3 +141,26 @@ export const GetFoodItemByRestaurantID = async (req, res) => {
     }
 
 }
+
+export const deleteItem = async (req, res) => {
+
+    try {
+
+        const { id } = req.params
+
+        const response = await RestaurantService.deleteItemById(id)
+        console.log(response)
+        return res
+            .status(200)
+            .json(response);
+
+    } catch (error) {
+        console.error("Could not get products", error);
+
+        return res.status(500).json({
+            success: false,
+            statusCode: 500,
+            message: "Internal server error",
+        });
+    }
+}
