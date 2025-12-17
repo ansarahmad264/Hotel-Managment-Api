@@ -1,6 +1,6 @@
 
 import express from 'express';
-import { addFoodItem, createRestaurant, loginRestaurant } from '../controllers/restaurants.controller.js';
+import { addFoodItem, createRestaurant, loginRestaurant, logoutResturant } from '../controllers/restaurants.controller.js';
 import { restaurantSignupSchema, restaurantLoginSchema} from '../validators/restaurantValidator.js';
 import { validateBody } from '../middlewares/validate.js';
 import { upload } from '../middlewares/multer.js';
@@ -12,5 +12,6 @@ router.post('/signup', validateBody(restaurantSignupSchema), createRestaurant);
 router.post('/signin', validateBody(restaurantLoginSchema), loginRestaurant);
 
 router.post('/add-item/:id',verifyJWT, upload.single("imageUrl"), addFoodItem)
+router.post('/signout', verifyJWT, logoutResturant)
 
 export default router;

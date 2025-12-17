@@ -56,6 +56,31 @@ export const loginRestaurant = async (req, res) => {
     }
 };
 
+export const logoutResturant = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const response = await RestaurantService.logoutRestaurant(userId);
+        console.log(response)
+        const cookieOptions = {
+            httpOnly: true
+        }
+
+        return res.status(response.statusCode)
+            .clearCookie("accessToken", cookieOptions)
+            .json(response)
+
+    } catch (error) {
+        console.error("Error logout in restaurant:", error);
+
+        return res.status(500).json({
+            success: false,
+            statusCode: 500,
+            message: "Internal server error",
+        });
+    }
+}
+
 export const addFoodItem = async (req, res) => {
 
     const { resturantId } = req.params

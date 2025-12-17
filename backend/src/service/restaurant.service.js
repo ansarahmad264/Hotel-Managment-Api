@@ -103,6 +103,21 @@ export default class RestaurantService {
         }
     }
 
+    static async logoutRestaurant(userID) {
+
+        const user = await db.Restaurant.findOne({ where: { id: userID } })
+
+        if (!user) {
+            return {
+                success: false,
+                statusCode: 500,
+                message: 'user not found',
+            }
+        }
+
+        return { success: true, statusCode: 200, message: "User logged out successfully" };
+    }
+
     static async addItem(name, description, price, restaurantId, imageUrl) {
 
         try {
