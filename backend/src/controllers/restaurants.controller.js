@@ -1,6 +1,6 @@
 // src/controller/restaurant.controller.js
-import RestaurantService from '../service/restaurant.service.js';
 import { uploadOnCloudinary } from '../utils/Cloudinary.js';
+import RestaurantService from '../service/restaurant.service.js'
 
 export const createRestaurant = async (req, res) => {
     try {
@@ -83,7 +83,9 @@ export const logoutResturant = async (req, res) => {
 
 export const addFoodItem = async (req, res) => {
 
-    const { resturantId } = req.params
+    const { id } = req.params
+
+    const resturantId = id;
 
     const { name, description, price } = req.body;
 
@@ -102,9 +104,9 @@ export const addFoodItem = async (req, res) => {
         imageUrl = profilePicture.url
     }
 
-    let resturantObj = new RestaurantService();
+    //let response = resturantObj.addItem(name, description, price, resturantId, imageUrl)
 
-    let response = resturantObj.addItem(name, description, price, resturantId, imageUrl)
+    let response = await RestaurantService.addItem(name, description, price, resturantId, imageUrl)
 
     return res
         .status(response.statusCode)
@@ -114,5 +116,5 @@ export const addFoodItem = async (req, res) => {
             message: 'Item Added Successfully',
             data: response
         });
-
+        
 }
