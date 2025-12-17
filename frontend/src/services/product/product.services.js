@@ -43,7 +43,7 @@ export const DeleteProductApi = async (id) => {
 };
 
 // Add Product Api Service
-export const EditProductApi = async (id) => {
+export const UpdateProductApi = async (id) => {
   try {
     const response = await apiClient.put(`/product/${id}`);
     return response.data;

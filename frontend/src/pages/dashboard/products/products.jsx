@@ -1,8 +1,29 @@
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { shortText } from "@/lib/utils";
 import {
   DeleteProductApi,
-  EditProductApi,
+  UpdateProductApi,
   GetProductsApi,
 } from "@/services/product/product.services";
 import { useAuthStore } from "@/store/auth.slice";
@@ -27,6 +48,21 @@ const Products = () => {
   const user = useAuthStore((state) => state.user);
   // loader
   const [loading, setLoading] = useState(false);
+  // delete loading state
+  const [deletingId, setDeletingId] = useState(null);
+  // delete confirmation dialog
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  // edit dialog
+  const [editDialog, setEditDialog] = useState(null);
+  // edit form data
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    description: "",
+    price: "",
+    imageUrl: "",
+  });
+  // edit submitting
+  const [editSubmitting, setEditSubmitting] = useState(false);
 
   useEffect(() => {
     // fetch products
@@ -39,13 +75,12 @@ const Products = () => {
         // success
         if (response?.success && response?.data?.length > 0) {
           setProducts(response?.data);
-          setLoading(false);
         } else {
           setProducts([]);
         }
       } catch (error) {
         console.log("Error--", error);
-        setLoading(false);
+        toast.error("Failed to fetch products");
       } finally {
         setLoading(false);
       }
@@ -53,35 +88,111 @@ const Products = () => {
     fetchProducts();
   }, [user.id]);
 
-  const handleDelete = async (id) => {
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm) return;
+
+    const { id, name } = deleteConfirm;
+
     try {
+      setDeletingId(id);
       const response = await DeleteProductApi(id);
       console.log("response from product---", response);
 
       // success
       if (response?.success) {
-        toast.success(response?.message, {
-          description: `${id} deleted successfully`,
+        // Instantly update UI by filtering out the deleted product
+        setProducts((prevProducts) =>
+          prevProducts.filter((product) => product.id !== id)
+        );
+
+        toast.success(response?.message || "Product deleted successfully", {
+          description: `${name} has been removed`,
         });
+      } else {
+        toast.error(response?.message || "Failed to delete product");
       }
     } catch (error) {
       console.log("Error--", error);
+      toast.error("An error occurred while deleting the product");
+    } finally {
+      setDeletingId(null);
+      setDeleteConfirm(null);
     }
   };
 
-  const handleEdit = async (id) => {
-    try {
-      const response = await EditProductApi(id);
-      console.log("response from product---", response);
+  const handleEditOpen = (product) => {
+    setEditDialog(product);
+    setEditFormData({
+      name: product.name || "",
+      description: product.description || "",
+      price: product.price || "",
+      imageUrl: product.imageUrl || "",
+    });
+  };
 
-      // success
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!editDialog) return;
+
+    // Validation
+    if (!editFormData.name.trim()) {
+      toast.error("Product name is required");
+      return;
+    }
+    if (!editFormData.price || parseFloat(editFormData.price) <= 0) {
+      toast.error("Please enter a valid price");
+      return;
+    }
+
+    try {
+      setEditSubmitting(true);
+      const response = await UpdateProductApi(editDialog.id, {
+        ...editFormData,
+        price: parseFloat(editFormData.price),
+        userId: user.id,
+      });
+
+      console.log("Update response:", response);
+
       if (response?.success) {
-        toast.success(response?.message, {
-          description: `${id} edited successfully`,
+        // Instantly update UI
+        setProducts((prevProducts) =>
+          prevProducts.map((product) =>
+            product.id === editDialog.id
+              ? {
+                  ...product,
+                  ...editFormData,
+                  price: parseFloat(editFormData.price),
+                }
+              : product
+          )
+        );
+
+        toast.success(response?.message || "Product updated successfully");
+        setEditDialog(null);
+        setEditFormData({
+          name: "",
+          description: "",
+          price: "",
+          imageUrl: "",
         });
+      } else {
+        toast.error(response?.message || "Failed to update product");
       }
     } catch (error) {
-      console.log("Error--", error);
+      console.error("Error updating product:", error);
+      toast.error("An error occurred while updating the product");
+    } finally {
+      setEditSubmitting(false);
     }
   };
 
@@ -114,7 +225,7 @@ const Products = () => {
               Menu manager
             </h2>
             <p className="text-sm text-slate-500">
-              Dummy list for quick inventory and pricing review.
+              Manage your menu items, pricing, and inventory.
             </p>
           </div>
           <button
@@ -136,18 +247,27 @@ const Products = () => {
           </div>
           <div className="divide-y divide-slate-100 bg-white">
             {loading ? (
-              <div className="p-4 text-center">Loading...</div>
+              <div className="p-8 text-center text-slate-500">
+                Loading products...
+              </div>
+            ) : products.length === 0 ? (
+              <div className="p-8 text-center text-slate-500">
+                No products found. Add your first product to get started.
+              </div>
             ) : (
               products.map((item) => (
                 <div
-                  key={item.name}
+                  key={item.id}
                   className="grid grid-cols-7 items-center px-4 py-3 text-sm text-slate-700 hover:bg-slate-50"
                 >
                   <div className="">
                     <img
                       src={item.imageUrl}
-                      alt="product"
-                      className=" w-12 h-12 rounded-full object-cover"
+                      alt={item.name}
+                      className="w-12 h-12 rounded-full object-cover"
+                      onError={(e) => {
+                        e.target.src = "/placeholder-image.png";
+                      }}
                     />
                   </div>
                   <div className="col-span-2">
@@ -155,7 +275,7 @@ const Products = () => {
                   </div>
                   <div>{shortText(item.description, 30)}</div>
                   <div className="font-semibold text-slate-900">
-                    {item.price}
+                    ${item.price}
                   </div>
 
                   <div className="text-right">
@@ -167,15 +287,19 @@ const Products = () => {
                   <div className="flex justify-end items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => handleDelete(item.id)}
-                      className="inline-flex cursor-pointer items-center gap-4 rounded-xl bg-red-400 text-white px-3 py-2 text-sm font-semibold transition focus-visible:ring-2 focus-visible:ring-sky-500"
+                      onClick={() =>
+                        setDeleteConfirm({ id: item.id, name: item.name })
+                      }
+                      disabled={deletingId === item.id}
+                      className="inline-flex cursor-pointer items-center gap-1 rounded-xl bg-red-500 text-white px-3 py-2 text-sm font-semibold transition hover:bg-red-600 focus-visible:ring-2 focus-visible:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Delete
+                      {deletingId === item.id ? "Deleting..." : "Delete"}
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleEdit(item.id)}
-                      className="inline-flex cursor-pointer items-center gap-4 rounded-xl bg-emerald-400 px-3 py-2 text-sm font-semibold text-white transition focus-visible:ring-2 focus-visible:ring-sky-500"
+                      onClick={() => handleEditOpen(item)}
+                      disabled={deletingId === item.id}
+                      className="inline-flex cursor-pointer items-center gap-1 rounded-xl bg-emerald-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600 focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Edit
                     </button>
@@ -186,6 +310,129 @@ const Products = () => {
           </div>
         </div>
       </section>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={!!deleteConfirm}
+        onOpenChange={() => setDeleteConfirm(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete{" "}
+              <span className="font-semibold text-slate-900">
+                "{deleteConfirm?.name}"
+              </span>
+              . This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit Product Dialog */}
+      <Dialog open={!!editDialog} onOpenChange={() => setEditDialog(null)}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Product</DialogTitle>
+            <DialogDescription>
+              Update the product information below.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Product Name *</Label>
+              <Input
+                id="edit-name"
+                name="name"
+                type="text"
+                value={editFormData.name}
+                onChange={handleEditChange}
+                placeholder="Enter product name"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description</Label>
+              <Textarea
+                id="edit-description"
+                name="description"
+                value={editFormData.description}
+                onChange={handleEditChange}
+                placeholder="Enter product description"
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-price">Price *</Label>
+              <Input
+                id="edit-price"
+                name="price"
+                type="number"
+                step="0.01"
+                min="0"
+                value={editFormData.price}
+                onChange={handleEditChange}
+                placeholder="0.00"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-imageUrl">Image URL</Label>
+              <Input
+                id="edit-imageUrl"
+                name="imageUrl"
+                type="url"
+                value={editFormData.imageUrl}
+                onChange={handleEditChange}
+                placeholder="https://example.com/image.jpg"
+              />
+              {editFormData.imageUrl && (
+                <div className="mt-2">
+                  <img
+                    src={editFormData.imageUrl}
+                    alt="Preview"
+                    className="w-24 h-24 rounded-lg object-cover border border-slate-200"
+                    onError={(e) => {
+                      e.target.src = "/placeholder-image.png";
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditDialog(null)}
+                disabled={editSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={editSubmitting}
+                className="bg-slate-900 hover:bg-slate-700"
+              >
+                {editSubmitting ? "Updating..." : "Update Product"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
