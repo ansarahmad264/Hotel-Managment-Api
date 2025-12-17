@@ -1,53 +1,16 @@
-import { GetProductsApi } from "@/services/product/product.services";
+import { Button } from "@/components/ui/button";
+import { shortText } from "@/lib/utils";
+import {
+  DeleteProductApi,
+  EditProductApi,
+  GetProductsApi,
+} from "@/services/product/product.services";
 import { useAuthStore } from "@/store/auth.slice";
 import React from "react";
 import { useEffect } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-// const products = [
-//   {
-//     name: "Charcoal Burger",
-//     category: "Mains",
-//     price: "$14.50",
-//     stock: 12,
-//     status: "Active",
-//   },
-//   {
-//     name: "Truffle Pasta",
-//     category: "Mains",
-//     price: "$18.00",
-//     stock: 24,
-//     status: "Active",
-//   },
-//   {
-//     name: "Citrus Cooler",
-//     category: "Beverages",
-//     price: "$7.00",
-//     stock: 0,
-//     status: "Inactive",
-//   },
-//   {
-//     name: "Matcha Cheesecake",
-//     category: "Dessert",
-//     price: "$9.20",
-//     stock: 9,
-//     status: "Low stock",
-//   },
-//   {
-//     name: "Falafel Wrap",
-//     category: "Mains",
-//     price: "$11.00",
-//     stock: 15,
-//     status: "Active",
-//   },
-// ];
-
-const statusStyles = {
-  Active: "bg-emerald-50 text-emerald-700 ring-emerald-100",
-  "Low stock": "bg-amber-50 text-amber-700 ring-amber-100",
-  Inactive: "bg-slate-100 text-slate-700 ring-slate-200",
-};
+import { toast } from "sonner";
 
 const summary = [
   { label: "Live items", value: "42", hint: "Shown to guests" },
@@ -62,26 +25,65 @@ const Products = () => {
   const [products, setProducts] = useState([]);
   // user
   const user = useAuthStore((state) => state.user);
-  // fetch products
-  const fetchProducts = async () => {
+  // loader
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // fetch products
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await GetProductsApi(user.id);
+        console.log("responseseee--", response);
+
+        // success
+        if (response?.success && response?.data?.length > 0) {
+          setProducts(response?.data);
+          setLoading(false);
+        } else {
+          setProducts([]);
+        }
+      } catch (error) {
+        console.log("Error--", error);
+        setLoading(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, [user.id]);
+
+  const handleDelete = async (id) => {
     try {
-      const response = await GetProductsApi(user.id);
-      console.log("responseseee--", response);
+      const response = await DeleteProductApi(id);
+      console.log("response from product---", response);
 
       // success
-      if (response?.success && response?.data?.length > 0) {
-        setProducts(response?.data);
-      } else {
-        setProducts([]);
+      if (response?.success) {
+        toast.success(response?.message, {
+          description: `${id} deleted successfully`,
+        });
       }
     } catch (error) {
       console.log("Error--", error);
     }
   };
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  const handleEdit = async (id) => {
+    try {
+      const response = await EditProductApi(id);
+      console.log("response from product---", response);
+
+      // success
+      if (response?.success) {
+        toast.success(response?.message, {
+          description: `${id} edited successfully`,
+        });
+      }
+    } catch (error) {
+      console.log("Error--", error);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -124,42 +126,63 @@ const Products = () => {
         </div>
 
         <div className="mt-4 overflow-hidden rounded-xl border border-slate-100">
-          <div className="grid grid-cols-6 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+          <div className="grid grid-cols-7 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+            <div className="">Image</div>
             <div className="col-span-2">Item</div>
-            <div>Category</div>
+            <div>Description</div>
             <div>Price</div>
-            <div>Status</div>
-            <div className="text-right">Stock</div>
+            <div className="text-right">Created At</div>
+            <div className="text-right">Action</div>
           </div>
           <div className="divide-y divide-slate-100 bg-white">
-            {products.map((item) => (
-              <div
-                key={item.name}
-                className="grid grid-cols-6 items-center px-4 py-3 text-sm text-slate-700 hover:bg-slate-50"
-              >
-                <div className="col-span-2">
-                  <p className="font-semibold text-slate-900">{item.name}</p>
-                  <p className="text-xs text-slate-500">#{item.category}</p>
+            {loading ? (
+              <div className="p-4 text-center">Loading...</div>
+            ) : (
+              products.map((item) => (
+                <div
+                  key={item.name}
+                  className="grid grid-cols-7 items-center px-4 py-3 text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  <div className="">
+                    <img
+                      src={item.imageUrl}
+                      alt="product"
+                      className=" w-12 h-12 rounded-full object-cover"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <p className="font-semibold text-slate-900">{item.name}</p>
+                  </div>
+                  <div>{shortText(item.description, 30)}</div>
+                  <div className="font-semibold text-slate-900">
+                    {item.price}
+                  </div>
+
+                  <div className="text-right">
+                    <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
+                      {new Date(item.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-end items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(item.id)}
+                      className="inline-flex cursor-pointer items-center gap-4 rounded-xl bg-red-400 text-white px-3 py-2 text-sm font-semibold transition focus-visible:ring-2 focus-visible:ring-sky-500"
+                    >
+                      Delete
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(item.id)}
+                      className="inline-flex cursor-pointer items-center gap-4 rounded-xl bg-emerald-400 px-3 py-2 text-sm font-semibold text-white transition focus-visible:ring-2 focus-visible:ring-sky-500"
+                    >
+                      Edit
+                    </button>
+                  </div>
                 </div>
-                <div>{item.category}</div>
-                <div className="font-semibold text-slate-900">{item.price}</div>
-                <div>
-                  <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${
-                      statusStyles[item.status] ||
-                      "bg-slate-100 text-slate-700 ring-slate-200"
-                    }`}
-                  >
-                    {item.status}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
-                    {item.stock} left
-                  </span>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </section>

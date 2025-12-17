@@ -31,3 +31,23 @@ export const GetProductApi = async (id, restauarantId) => {
     return error.response ? error.response.data : null;
   }
 };
+
+// Add Product Api Service
+export const DeleteProductApi = async (id) => {
+  try {
+    const response = await apiClient.delete(`/product/${id}`);
+    return response.data;
+  } catch (error) {
+    return error.response ? error.response.data : null;
+  }
+};
+
+// Add Product Api Service
+export const EditProductApi = async (id) => {
+  try {
+    const response = await apiClient.put(`/product/${id}`);
+    return response.data;
+  } catch (error) {
+    return error.response ? error.response.data : null;
+  }
+};

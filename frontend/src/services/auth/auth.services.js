@@ -21,3 +21,14 @@ export const SignUpApi = async (form) => {
     return error.response ? error.response.data : null;
   }
 };
+
+export const SignOutApi = async () => {
+  try {
+    const response = await apiClient.post("/signout");
+    console.log("response--", response);
+    return response.data;
+  } catch (error) {
+    console.log("error--", error);
+    return error.response ? error.response.data : null;
+  }
+};

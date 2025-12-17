@@ -1,3 +1,4 @@
+import { SignOutApi } from "@/services/auth/auth.services";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -17,11 +18,18 @@ export const useAuthStore = create()(
         }));
       },
 
-      logout: () => {
-        set(() => ({
-          user: null,
-          isAuthenticated: false,
-        }));
+      logout: async () => {
+        const response = await SignOutApi();
+        console.log("response--in signout store--", response);
+        // success
+        if (response?.success) {
+          set(() => {
+            return {
+              user: null,
+              isAuthenticated: false,
+            };
+          });
+        }
       },
     }),
     {
