@@ -172,9 +172,9 @@ export default class RestaurantService {
         const item = await db.FoodItem.findOne({ where: { id: id } })
 
         if (item) {
-            
+
             await item.destroy();
-            
+
             return {
                 success: true,
                 statusCode: 200,
@@ -188,5 +188,52 @@ export default class RestaurantService {
             messgae: "item not found"
         }
     }
+
+    static async updateItem(itemId, updates, restaurantId) {
+        try {
+            const item = await db.FoodItem.findByPk(itemId);
+
+            if (!item) {
+                return {
+                    success: false,
+                    statusCode: 404,
+                    message: 'Food item not found',
+                };
+            }
+
+            // Optional: ensure the item belongs to this restaurant
+            if (restaurantId && item.restaurantId !== restaurantId) {
+                return {
+                    success: false,
+                    statusCode: 403,
+                    message: 'You are not allowed to update this item',
+                };
+            }
+
+            const { name, description, price, imageUrl } = updates;
+
+            if (name !== undefined) item.name = name;
+            if (description !== undefined) item.description = description;
+            if (price !== undefined) item.price = price;
+            if (imageUrl !== undefined) item.imageUrl = imageUrl;
+
+            await item.save();
+
+            return {
+                success: true,
+                statusCode: 200,
+                data: item,
+            };
+        } catch (error) {
+            console.error('Error in RestaurantService.updateItem:', error);
+
+            return {
+                success: false,
+                statusCode: 500,
+                message: 'Internal server error',
+            };
+        }
+    }
+
 
 }

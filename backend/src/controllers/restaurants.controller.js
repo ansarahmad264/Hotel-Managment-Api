@@ -164,3 +164,32 @@ export const deleteItem = async (req, res) => {
         });
     }
 }
+
+export const updateFoodItem = async (req, res) => {
+    try {
+        const { id } = req.params; // this is the FoodItem ID
+        const { name, description, price } = req.body;
+
+        // If updating image, multer will put it here
+        const imageUrl = req.file ? req.file.path : undefined;
+
+        // Assuming verifyJWT sets req.restaurant from the token
+        const restaurantId = req.restaurant?.id;
+
+        const response = await RestaurantService.updateItem(
+            id,
+            { name, description, price, imageUrl },
+            restaurantId
+        );
+
+        return res.status(response.statusCode).json(response);
+    } catch (error) {
+        console.error('Could not update product', error);
+
+        return res.status(500).json({
+            success: false,
+            statusCode: 500,
+            message: 'Internal server error',
+        });
+    }
+};
