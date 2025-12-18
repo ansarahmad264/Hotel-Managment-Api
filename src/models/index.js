@@ -7,6 +7,7 @@ import RestaurantModel from "./Restaurant.js";
 import FoodItemModel from "./FoodItem.js";
 import OrderModel from "./Order.js";
 import OrderItemModel from "./OrderItem.js";
+import itemCartModel from "./itemCart.js";
 
 
 const db = {};
@@ -20,6 +21,7 @@ db.Restaurant = RestaurantModel(sequelize, DataTypes);
 db.FoodItem = FoodItemModel(sequelize, DataTypes);
 db.Order = OrderModel(sequelize, DataTypes);
 db.OrderItem = OrderItemModel(sequelize, DataTypes);
+db.itemCart = itemCartModel(sequelize,DataTypes);
 
 await db.sequelize.sync({ alter: true });  // IMPORTANT
 console.log("All models synchronized");

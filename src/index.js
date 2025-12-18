@@ -3,7 +3,9 @@ import cookieParser from 'cookie-parser'
 import dotenv from 'dotenv'
 import cors from "cors";
 //import Routes
-import router from './routes/restaurant.routes.js';
+import restaurantRouter from './routes/restaurant.routes.js';
+import orderRouter from "./routes/order.routes.js"
+import cartRouter from './routes/cart.routes.js'
 import { connectDb } from './db/connection.js';
 
 dotenv.config()
@@ -31,7 +33,10 @@ const Logger = (req, res, next) => {
     next();
 }
 
-app.use('/v1/api', router)
+app.use('/v1/api', restaurantRouter)
+app.use('/v1/api', orderRouter)
+app.use('/v1/api', cartRouter)
+
 
 connectDb()
     .then(() => {

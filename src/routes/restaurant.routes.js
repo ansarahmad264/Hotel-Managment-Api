@@ -15,6 +15,7 @@ import {
 import { validateBody } from "../middlewares/validate.js";
 import { upload } from "../middlewares/multer.js";
 import { verifyJWT } from "../middlewares/protect.js";
+import { getRestaurantOrders } from "../controllers/order.controller.js";
 
 const router = express.Router();
 
@@ -25,11 +26,8 @@ router.post("/add-item/:id", verifyJWT, upload.single("image"), addFoodItem);
 router.post("/signout", verifyJWT, logoutResturant);
 router.get("/products/:id", verifyJWT, GetFoodItemByRestaurantID);
 router.delete("/delete/:id", verifyJWT, deleteItem);
-router.put(
-  "/update-item/:id",
-  verifyJWT,
-  upload.single("image"),
-  updateFoodItem
-);
+router.put("/update-item/:id", verifyJWT, upload.single("image"), updateFoodItem);
+router.get("/orders", verifyJWT, getRestaurantOrders);
+
 
 export default router;
