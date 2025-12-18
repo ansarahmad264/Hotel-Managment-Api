@@ -1,5 +1,5 @@
 {
-  "name": "hotel-management-api",
+  "name": "hotel-web-api",
   "version": "1.0.0",
   "description": "This is hotel system where resturants can add register and offer food while user can register and order food with lots of other functionalities.",
   "license": "ISC",
