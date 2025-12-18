@@ -27,55 +27,43 @@ import {
   GetProductsApi,
 } from "@/services/product/product.services";
 import { useAuthStore } from "@/store/auth.slice";
-import React from "react";
-import { useEffect } from "react";
-import { useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { Copy, Upload, X, Image as ImageIcon } from "lucide-react";
 
-// Products
 const Products = () => {
-  // navigate
   const navigate = useNavigate();
-  // products
   const [products, setProducts] = useState([]);
-  // user
   const user = useAuthStore((state) => state.user);
-  // loader
   const [loading, setLoading] = useState(false);
-  // delete loading state
-  const [deletingId, setDeletingId] = useState(null);
-  // delete confirmation dialog
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  // edit dialog
+
+  // Edit States
   const [editDialog, setEditDialog] = useState(null);
-  // edit form data
   const [editFormData, setEditFormData] = useState({
     name: "",
     description: "",
     price: "",
     imageUrl: "",
   });
-  // edit submitting
+  const [editImageFile, setEditImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
   const [editSubmitting, setEditSubmitting] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
-    // fetch products
     const fetchProducts = async () => {
       try {
         setLoading(true);
         const response = await GetProductsApi(user.id);
-        console.log("responseseee--", response);
-
-        // success
         if (response?.success && response?.data?.length > 0) {
           setProducts(response?.data);
         } else {
           setProducts([]);
         }
       } catch (error) {
-        console.log("Error--", error);
-        toast.error("Failed to fetch products");
+        toast.error(error?.message || "Failed to fetch products");
       } finally {
         setLoading(false);
       }
@@ -83,38 +71,7 @@ const Products = () => {
     fetchProducts();
   }, [user.id]);
 
-  const handleDeleteConfirm = async () => {
-    if (!deleteConfirm) return;
-
-    const { id, name } = deleteConfirm;
-
-    try {
-      setDeletingId(id);
-      const response = await DeleteProductApi(id);
-      console.log("response from product---", response);
-
-      // success
-      if (response?.success) {
-        // Instantly update UI by filtering out the deleted product
-        setProducts((prevProducts) =>
-          prevProducts.filter((product) => product.id !== id)
-        );
-
-        toast.success(response?.message || "Product deleted successfully", {
-          description: `${name} has been removed`,
-        });
-      } else {
-        toast.error(response?.message || "Failed to delete product");
-      }
-    } catch (error) {
-      console.log("Error--", error);
-      toast.error("An error occurred while deleting the product");
-    } finally {
-      setDeletingId(null);
-      setDeleteConfirm(null);
-    }
-  };
-
+  // --- Handlers ---
   const handleEditOpen = (product) => {
     setEditDialog(product);
     setEditFormData({
@@ -123,78 +80,110 @@ const Products = () => {
       price: product.price || "",
       imageUrl: product.imageUrl || "",
     });
+    setImagePreview(product.imageUrl || "");
+    setEditImageFile(null);
   };
 
   const handleEditChange = (e) => {
     const { name, value } = e.target;
-    setEditFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setEditFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === "imageUrl" && !editImageFile) {
+      setImagePreview(value);
+    }
+  };
+
+  const handleCopyUrl = () => {
+    if (editFormData.imageUrl) {
+      navigator.clipboard.writeText(editFormData.imageUrl);
+      toast.success("URL copied to clipboard");
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setEditImageFile(file);
+      const localUrl = URL.createObjectURL(file);
+      setImagePreview(localUrl);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setEditImageFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setImagePreview(editFormData.imageUrl);
   };
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-
     if (!editDialog) return;
-
-    // Validation
-    if (!editFormData.name.trim()) {
-      toast.error("Product name is required");
-      return;
-    }
-    if (!editFormData.price || parseFloat(editFormData.price) <= 0) {
-      toast.error("Please enter a valid price");
-      return;
-    }
 
     try {
       setEditSubmitting(true);
-      const response = await UpdateProductApi(editDialog.id, {
-        ...editFormData,
-        price: parseFloat(editFormData.price),
-        userId: user.id,
-      });
 
-      console.log("Update response:", response);
+      // If your API requires FormData for file uploads, use this:
+      const formData = new FormData();
+      formData.append("name", editFormData.name);
+      formData.append("description", editFormData.description);
+      formData.append("price", parseFloat(editFormData.price));
+      formData.append("userId", user.id);
+
+      if (editImageFile) {
+        formData.append("image", editImageFile);
+      } else {
+        formData.append("imageUrl", editFormData.imageUrl);
+      }
+
+      // Note: Adjust UpdateProductApi to accept formData if necessary
+      const response = await UpdateProductApi(
+        editDialog.id,
+        editImageFile
+          ? formData
+          : {
+              ...editFormData,
+              price: parseFloat(editFormData.price),
+              userId: user.id,
+            }
+      );
 
       if (response?.success) {
-        // Instantly update UI
-        setProducts((prevProducts) =>
-          prevProducts.map((product) =>
-            product.id === editDialog.id
-              ? {
-                  ...product,
-                  ...editFormData,
-                  price: parseFloat(editFormData.price),
-                }
-              : product
+        setProducts((prev) =>
+          prev.map((p) =>
+            p.id === editDialog.id
+              ? { ...p, ...editFormData, price: parseFloat(editFormData.price) }
+              : p
           )
         );
-
-        toast.success(response?.message || "Product updated successfully");
+        toast.success("Product updated successfully");
         setEditDialog(null);
-        setEditFormData({
-          name: "",
-          description: "",
-          price: "",
-          imageUrl: "",
-        });
-      } else {
-        toast.error(response?.message || "Failed to update product");
       }
     } catch (error) {
-      console.error("Error updating product:", error);
-      toast.error("An error occurred while updating the product");
+      toast.error(error?.message || "Update failed");
     } finally {
       setEditSubmitting(false);
     }
   };
 
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm) return;
+    try {
+      const response = await DeleteProductApi(deleteConfirm.id);
+      if (response?.success) {
+        setProducts((prev) => prev.filter((p) => p.id !== deleteConfirm.id));
+        toast.success("Deleted successfully");
+      }
+    } catch (error) {
+      toast.error(error?.message || "Delete failed");
+    } finally {
+      setDeleteConfirm(null);
+    }
+  };
+
   return (
     <div className="space-y-8 mt-5">
+      {/* Table Section */}
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
             <p className="text-xs uppercase tracking-[0.14em] text-slate-400">
               Products
@@ -220,73 +209,178 @@ const Products = () => {
             <div className="text-right">Created At</div>
             <div className="text-right">Action</div>
           </div>
-          <div className="divide-y divide-slate-100 bg-white">
+
+          <div className="divide-y divide-slate-100 border rounded-xl overflow-hidden">
             {loading ? (
               <div className="p-8 text-center text-slate-500">
                 Loading products...
               </div>
-            ) : products.length === 0 ? (
-              <div className="p-8 text-center text-slate-500">
-                No products found. Add your first product to get started.
-              </div>
-            ) : (
+            ) : products.length > 0 ? (
               products.map((item) => (
                 <div
                   key={item.id}
-                  className="grid grid-cols-7 items-center px-4 py-3 text-sm text-slate-700 hover:bg-slate-50"
+                  className="grid grid-cols-7 items-center p-4 hover:bg-slate-50 transition"
                 >
-                  <div className="">
-                    <img
-                      src={item.imageUrl}
-                      alt={item.name}
-                      className="w-12 h-12 rounded-full object-cover"
-                      onError={(e) => {
-                        e.target.src = "/placeholder-image.png";
-                      }}
-                    />
+                  <img
+                    src={item.imageUrl}
+                    className="w-12 h-12 rounded-full object-cover"
+                    alt=""
+                  />
+                  <div className="col-span-2 font-medium">{item.name}</div>
+                  <div className="text-slate-500">
+                    {shortText(item.description, 20)}
                   </div>
-                  <div className="col-span-2">
-                    <p className="font-semibold text-slate-900">{item.name}</p>
+                  <div className="font-bold">${item.price}</div>
+                  <div className="text-right text-xs text-slate-400">
+                    {new Date(item.createdAt).toLocaleDateString()}
                   </div>
-                  <div>{shortText(item.description, 30)}</div>
-                  <div className="font-semibold text-slate-900">
-                    ${item.price}
-                  </div>
-
-                  <div className="text-right">
-                    <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
-                      {new Date(item.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-end items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setDeleteConfirm({ id: item.id, name: item.name })
-                      }
-                      disabled={deletingId === item.id}
-                      className="inline-flex cursor-pointer items-center gap-1 rounded-xl bg-red-500 text-white px-3 py-2 text-sm font-semibold transition hover:bg-red-600 focus-visible:ring-2 focus-visible:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {deletingId === item.id ? "Deleting..." : "Delete"}
-                    </button>
-                    <button
-                      type="button"
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => handleEditOpen(item)}
-                      disabled={deletingId === item.id}
-                      className="inline-flex cursor-pointer items-center gap-1 rounded-xl bg-emerald-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600 focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Edit
-                    </button>
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setDeleteConfirm(item)}
+                    >
+                      Delete
+                    </Button>
                   </div>
                 </div>
               ))
+            ) : (
+              <div className="py-4 text-center text-slate-500">
+                No products found. Add your first product to get started.
+              </div>
             )}
           </div>
         </div>
       </section>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Edit Dialog */}
+      <Dialog open={!!editDialog} onOpenChange={() => setEditDialog(null)}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Product</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Product Name</Label>
+              <Input
+                name="name"
+                value={editFormData.name}
+                onChange={handleEditChange}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea
+                name="description"
+                value={editFormData.description}
+                onChange={handleEditChange}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Price</Label>
+              <Input
+                name="price"
+                type="number"
+                step="0.01"
+                value={editFormData.price}
+                onChange={handleEditChange}
+                required
+              />
+            </div>
+
+            {/* Image Section */}
+            <div className="space-y-3">
+              <Label>Product Image</Label>
+              <div className="flex gap-2">
+                <Input
+                  name="imageUrl"
+                  value={editFormData.imageUrl}
+                  onChange={handleEditChange}
+                  placeholder="Image URL"
+                  disabled={true}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={handleCopyUrl}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="flex gap-4 items-center">
+                <div className="relative">
+                  {imagePreview ? (
+                    <img
+                      src={imagePreview}
+                      className="w-20 h-20 rounded-lg object-cover border"
+                      alt="Preview"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-lg bg-slate-100 flex items-center justify-center">
+                      <ImageIcon className="text-slate-400" />
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex-1 mt-5">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
+                {!editImageFile ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => fileInputRef.current.click()}
+                  >
+                    <Upload className="mr-2 h-4 w-4" /> Upload File
+                  </Button>
+                ) : (
+                  <div className="flex items-center justify-between p-2 border rounded bg-slate-50 text-xs">
+                    <span className="truncate w-32">{editImageFile.name}</span>
+                    <X
+                      className="h-4 w-4 cursor-pointer text-red-500"
+                      onClick={handleRemoveFile}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button type="submit" disabled={editSubmitting}>
+                {editSubmitting ? "Updating..." : "Update Product"}
+              </Button>
+              <Button
+                variant="destructive"
+                type="button"
+                disabled={editSubmitting}
+              >
+                Cancel
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
       <AlertDialog
         open={!!deleteConfirm}
         onOpenChange={() => setDeleteConfirm(null)}
@@ -294,6 +388,7 @@ const Products = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+
             <AlertDialogDescription>
               This will permanently delete{" "}
               <span className="font-semibold text-slate-900">
@@ -302,6 +397,7 @@ const Products = () => {
               . This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
@@ -313,101 +409,6 @@ const Products = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Edit Product Dialog */}
-      <Dialog open={!!editDialog} onOpenChange={() => setEditDialog(null)}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Edit Product</DialogTitle>
-            <DialogDescription>
-              Update the product information below.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleEditSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-name">Product Name *</Label>
-              <Input
-                id="edit-name"
-                name="name"
-                type="text"
-                value={editFormData.name}
-                onChange={handleEditChange}
-                placeholder="Enter product name"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-description">Description</Label>
-              <Textarea
-                id="edit-description"
-                name="description"
-                value={editFormData.description}
-                onChange={handleEditChange}
-                placeholder="Enter product description"
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-price">Price *</Label>
-              <Input
-                id="edit-price"
-                name="price"
-                type="number"
-                step="0.01"
-                min="0"
-                value={editFormData.price}
-                onChange={handleEditChange}
-                placeholder="0.00"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-imageUrl">Image URL</Label>
-              <Input
-                id="edit-imageUrl"
-                name="imageUrl"
-                type="url"
-                value={editFormData.imageUrl}
-                onChange={handleEditChange}
-                placeholder="https://example.com/image.jpg"
-              />
-              {editFormData.imageUrl && (
-                <div className="mt-2">
-                  <img
-                    src={editFormData.imageUrl}
-                    alt="Preview"
-                    className="w-24 h-24 rounded-lg object-cover border border-slate-200"
-                    onError={(e) => {
-                      e.target.src = "/placeholder-image.png";
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setEditDialog(null)}
-                disabled={editSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={editSubmitting}
-                className="bg-slate-900 hover:bg-slate-700"
-              >
-                {editSubmitting ? "Updating..." : "Update Product"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
