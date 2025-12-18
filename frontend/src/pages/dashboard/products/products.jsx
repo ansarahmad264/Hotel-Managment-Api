@@ -33,12 +33,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-const summary = [
-  { label: "Live items", value: "42", hint: "Shown to guests" },
-  { label: "Low stock", value: "6", hint: "Need restock" },
-  { label: "Hidden", value: "8", hint: "Disabled temporarily" },
-];
-
+// Products
 const Products = () => {
   // navigate
   const navigate = useNavigate();
@@ -197,24 +192,7 @@ const Products = () => {
   };
 
   return (
-    <div className="space-y-8">
-      <section className="grid gap-4 sm:grid-cols-3">
-        {summary.map((card) => (
-          <div
-            key={card.label}
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-5 shadow-sm"
-          >
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-              {card.label}
-            </p>
-            <p className="mt-2 text-3xl font-semibold text-slate-900">
-              {card.value}
-            </p>
-            <p className="text-xs text-slate-500">{card.hint}</p>
-          </div>
-        ))}
-      </section>
-
+    <div className="space-y-8 mt-5">
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -224,9 +202,6 @@ const Products = () => {
             <h2 className="text-xl font-semibold text-slate-900">
               Menu manager
             </h2>
-            <p className="text-sm text-slate-500">
-              Manage your menu items, pricing, and inventory.
-            </p>
           </div>
           <button
             onClick={() => navigate("/dashboard/products/add")}
