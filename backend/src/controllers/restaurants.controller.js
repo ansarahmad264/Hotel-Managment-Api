@@ -170,8 +170,20 @@ export const updateFoodItem = async (req, res) => {
         const { id } = req.params; // this is the FoodItem ID
         const { name, description, price } = req.body;
 
-        // If updating image, multer will put it here
-        const imageUrl = req.file ? req.file.path : undefined;
+        //IMAGE FUNCTIONALITY
+        const profilePicLocalpath = req.file?.path
+        let imageUrl;
+
+        if (profilePicLocalpath) {
+
+            const profilePicture = await uploadOnCloudinary(profilePicLocalpath)
+
+            if (!profilePicture.url) {
+                throw new ApiError(400, "Error while uploading the file")
+            }
+
+            imageUrl = profilePicture.url
+        }
 
         // Assuming verifyJWT sets req.restaurant from the token
         const restaurantId = req.restaurant?.id;
