@@ -45,3 +45,5 @@ connectDb()
         })
     })
 
+    // only for vercel deployment
+export default app;
