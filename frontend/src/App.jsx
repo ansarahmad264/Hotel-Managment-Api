@@ -11,7 +11,6 @@ import { useAuthStore } from "./store/auth.slice";
 const Home = lazy(() => import("./pages/dashboard/home"));
 const Orders = lazy(() => import("./pages/dashboard/orders/orders"));
 const Products = lazy(() => import("./pages/dashboard/products/products"));
-const Users = lazy(() => import("./pages/dashboard/users/users"));
 const AddProduct = lazy(() => import("./pages/dashboard/products/add-product"));
 
 function App() {
@@ -35,7 +34,6 @@ function App() {
           <Route path="orders" element={<Orders />} />
           <Route path="products" element={<Products />} />
           <Route path="products/add" element={<AddProduct />} />
-          <Route path="users" element={<Users />} />
         </Route>
       </Route>
 
