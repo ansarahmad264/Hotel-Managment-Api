@@ -25,6 +25,11 @@ app.use(
 );
 
 app.use(cookieParser());
+// logger
+const Logger = (req, res, next) => {
+  (req, res, next) => console.log("Ilaaki Nazim Body---", req);
+  next();
+};
 
 app.use("/v1/api", router);
 
@@ -35,11 +40,12 @@ connectDb().then(() => {
       .json({ status: 200, success: true, message: "Hello from Crazy" });
   });
 
-  app.listen(process.env.PORT, () => {
+  app.listen(process.env.PORT, "0.0.0.0", () => {
     console.log(
       `🌐 HTTP server running at http://localhost:${process.env.PORT}`
     );
   });
 });
 
+// only for vercel deployment
 export default app;
