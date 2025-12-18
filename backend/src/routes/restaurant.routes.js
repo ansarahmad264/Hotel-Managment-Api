@@ -1,6 +1,6 @@
 
 import express from 'express';
-import { addFoodItem, createRestaurant, deleteItem, GetFoodItemByRestaurantID, loginRestaurant, logoutResturant } from '../controllers/restaurants.controller.js';
+import { addFoodItem, createRestaurant, deleteItem, GetFoodItemByRestaurantID, loginRestaurant, logoutResturant, updateFoodItem } from '../controllers/restaurants.controller.js';
 import { restaurantSignupSchema, restaurantLoginSchema } from '../validators/restaurantValidator.js';
 import { validateBody } from '../middlewares/validate.js';
 import { upload } from '../middlewares/multer.js';
