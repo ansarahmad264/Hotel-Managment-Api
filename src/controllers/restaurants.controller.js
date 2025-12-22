@@ -1,5 +1,4 @@
 // src/controller/restaurant.controller.js
-import { uploadOnCloudinary } from '../utils/Cloudinary.js';
 import RestaurantService from '../service/restaurant.service.js'
 
 export const createRestaurant = async (req, res) => {
@@ -89,20 +88,11 @@ export const addFoodItem = async (req, res) => {
 
     const { name, description, price } = req.body;
 
-    //IMAGE FUNCTIONALITY
-    const profilePicLocalpath = req.file?.path
-    let imageUrl;
-
-    if (profilePicLocalpath) {
-
-        const profilePicture = await uploadOnCloudinary(profilePicLocalpath)
-
-        if (!profilePicture.url) {
-            throw new ApiError(400, "Error while uploading the file")
-        }
-
-        imageUrl = profilePicture.url
+    if (!req.file) {
+        return res.status(400).json({ message: "Image is required" });
     }
+
+    const imageUrl = req.file?.path;
 
     //let response = resturantObj.addItem(name, description, price, resturantId, imageUrl)
 
@@ -170,20 +160,11 @@ export const updateFoodItem = async (req, res) => {
         const { id } = req.params; // this is the FoodItem ID
         const { name, description, price } = req.body;
 
-        //IMAGE FUNCTIONALITY
-        const profilePicLocalpath = req.file?.path
-        let imageUrl;
-
-        if (profilePicLocalpath) {
-
-            const profilePicture = await uploadOnCloudinary(profilePicLocalpath)
-
-            if (!profilePicture.url) {
-                throw new ApiError(400, "Error while uploading the file")
-            }
-
-            imageUrl = profilePicture.url
+        if (!req.file) {
+            return res.status(400).json({ message: "Image is required" });
         }
+
+        const imageUrl = req.file?.path;
 
         // Assuming verifyJWT sets req.restaurant from the token
         const restaurantId = req.restaurant?.id;

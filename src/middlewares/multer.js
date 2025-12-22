@@ -1,23 +1,13 @@
 import multer from 'multer';
-import fs from 'fs';
-import path from 'path';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import cloudinary from '../utils/Cloudinary.js'; // Import from your utils file
 
-const uploadDir = path.join(process.cwd(), 'public', 'temp');
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    // Create the directory if it doesn't exist
-    fs.mkdir(uploadDir, { recursive: true }, (err) => {
-      if (err) {
-        return cb(err, uploadDir);
-      }
-      cb(null, uploadDir);
-    });
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname);
-  },
-});
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'restaurant-uploads', // The name of the folder in Cloudinary 
+    dashboardallowed_formats: ['jpg', 'png', 'jpeg', 'webp'], // Limit file types
+}});
 
 export const upload = multer({
   storage,
