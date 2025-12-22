@@ -21,7 +21,7 @@ app.use(urlencoded({ limit: '50mb', extended: true }))
 
 // cors
 app.use(cors({
-    origin: ["http://localhost:5173", "https://hotel-managment-api-xi.vercel.app"],
+    origin: ["http://localhost:5173", "https://hotel-managment-api-56w2.vercel.app"],
     credentials: true
 }));
 
