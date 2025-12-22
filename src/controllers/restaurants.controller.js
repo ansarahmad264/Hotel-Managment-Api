@@ -161,10 +161,6 @@ export const updateFoodItem = async (req, res) => {
         const { id } = req.params; // this is the FoodItem ID
         const { name, description, price } = req.body;
 
-        if (!req.file) {
-            return res.status(400).json({ message: "Image is required" });
-        }
-
         const imageUrl = req.file?.path;
 
         // Assuming verifyJWT sets req.restaurant from the token
