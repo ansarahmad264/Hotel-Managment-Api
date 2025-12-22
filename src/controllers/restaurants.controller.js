@@ -1,6 +1,13 @@
 // src/controller/restaurant.controller.js
 import RestaurantService from '../service/restaurant.service.js'
 
+export const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production" ? true : false ,
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    maxAge: 24 * 60 * 60 * 1000
+}
+
 export const createRestaurant = async (req, res) => {
     try {
         console.log("req body---in controller--", req.body);
@@ -36,9 +43,6 @@ export const loginRestaurant = async (req, res) => {
             password
         );
 
-        const cookieOptions = {
-            httpOnly: true
-        }
 
         return res.status(response.statusCode)
             .cookie('accessToken', response.data?.accessToken, cookieOptions)
@@ -61,10 +65,7 @@ export const logoutResturant = async (req, res) => {
 
         const response = await RestaurantService.logoutRestaurant(userId);
         console.log(response)
-        const cookieOptions = {
-            httpOnly: true
-        }
-
+     
         return res.status(response.statusCode)
             .clearCookie("accessToken", cookieOptions)
             .json(response)
