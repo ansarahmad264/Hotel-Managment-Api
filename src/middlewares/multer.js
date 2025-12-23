@@ -6,7 +6,7 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'restaurant-uploads', // The name of the folder in Cloudinary 
-    dashboardallowed_formats: ['jpg', 'png', 'jpeg', 'webp'], // Limit file types
+    allowed_formats: ['jpg', 'png', 'jpeg', 'webp'], // Limit file types
 }});
 
 export const upload = multer({
