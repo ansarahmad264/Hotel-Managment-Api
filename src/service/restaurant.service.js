@@ -235,5 +235,48 @@ export default class RestaurantService {
         }
     }
 
+    static async allRestaurants() {
+
+        const restaurants = await db.Restaurant.findAll({
+            attributes: { exclude: ["password", "createdAt", "updatedAt"] },
+        });
+
+        if (!restaurants) {
+            return {
+                success: false,
+                statusCode: 500,
+                message: 'no restaurants found',
+            }
+        }
+
+        return {
+            success: true,
+            statusCode: 201,
+            data: restaurants,
+        };
+    }
+
+    static async allFoodItems() {
+
+        const items = await db.FoodItem.findAll({
+            attributes: { exclude: ["createdAt", "updatedAt"] },
+        });
+
+        if (!items) {
+            return {
+                success: false,
+                statusCode: 500,
+                message: 'no items found',
+            }
+        }
+
+        return {
+            success: true,
+            statusCode: 201,
+            data: items,
+        };
+
+    }
+
 
 }

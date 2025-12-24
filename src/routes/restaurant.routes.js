@@ -3,6 +3,8 @@ import {
   addFoodItem,
   createRestaurant,
   deleteItem,
+  getAllFoodItems,
+  getAllRestaurants,
   GetFoodItemByRestaurantID,
   loginRestaurant,
   logoutResturant,
@@ -28,6 +30,9 @@ router.get("/products/:id", verifyJWT, GetFoodItemByRestaurantID);
 router.delete("/delete/:id", verifyJWT, deleteItem);
 router.put("/update-item/:id", verifyJWT, upload.single("image"), updateFoodItem);
 router.get("/orders", verifyJWT, getRestaurantOrders);
+
+router.get('/all-restaurants', getAllRestaurants)
+router.get('/all-fooditems', getAllFoodItems)
 
 
 export default router;

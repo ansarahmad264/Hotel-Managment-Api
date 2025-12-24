@@ -3,7 +3,7 @@ import RestaurantService from '../service/restaurant.service.js'
 
 export const cookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production" ? true : false ,
+    secure: process.env.NODE_ENV === "production" ? true : false,
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: 24 * 60 * 60 * 1000
 }
@@ -65,7 +65,7 @@ export const logoutResturant = async (req, res) => {
 
         const response = await RestaurantService.logoutRestaurant(userId);
         console.log(response)
-     
+
         return res.status(response.statusCode)
             .clearCookie("accessToken", cookieOptions)
             .json(response)
@@ -183,3 +183,31 @@ export const updateFoodItem = async (req, res) => {
         });
     }
 };
+
+export const getAllRestaurants = async (req, res) => {
+
+    const response = await RestaurantService.allRestaurants();
+
+    return res
+        .status(response.statusCode)
+        .json(
+            {
+                success: response?.success,
+                message: response?.message,
+                data: response?.data
+            })
+}
+
+export const getAllFoodItems = async (req, res) => {
+
+    const response = await RestaurantService.allFoodItems();
+
+    return res
+        .status(response.statusCode)
+        .json(
+            {
+                success: response?.success,
+                message: response?.message,
+                data: response?.data
+            })
+}

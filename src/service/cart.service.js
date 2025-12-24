@@ -86,7 +86,7 @@ export default class CartService {
 
   static async getCartById(cartId, userId) {
     try {
-      const cart = await db.Cart.findByPk(cartId);
+      const cart = await db.Cart.findAll({where: {cartId}});
 
       if (!cart) {
         return {
