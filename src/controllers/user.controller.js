@@ -1,3 +1,4 @@
+import { where } from "sequelize";
 import db from "../models/index.js";
 
 export const createUser = async (req, res) => {
@@ -38,3 +39,32 @@ export const createUser = async (req, res) => {
             .json({ success: false, statusCode: error.statusCode, message: error.message || 'Internal server error' });
     }
 };
+
+export const loginUser = async ( req, res) => {
+    const { email, password} = req.body;
+
+    const response = await db.User.findOne({where: {email}})
+
+    if(!response){
+        return res.json({
+            status : 400,
+            sucess: false,
+            messgae: 'user not found'
+        })
+    }
+
+    const validateUser = await response.isPasswordCorrect(password)
+    
+    if(validateUser.success == false){
+        return res.json(validateUser)
+    }
+
+    const { createdAt, updatedAt, password: _password, ...userData } = response.toJSON();
+
+    return res.json({
+        status: 200,
+        success: true,
+        message: 'user logged in successfully',
+        data: userData
+    })
+}

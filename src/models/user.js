@@ -42,8 +42,24 @@ export default (sequelize, DataTypes) => {
     }
   });
 
-  User.prototype.isPasswordCorrect = function (password) {
-    return bcrypt.compare(password, this.password);
+  User.prototype.isPasswordCorrect = async function (password, res) {
+    const validateUser = await bcrypt.compare(password, this.password);
+
+    if(!validateUser){
+
+      return {
+        status: 400,
+        success: false,
+        message: 'invalid credentials'
+      }
+    }
+
+    return {
+      status: 200,
+      success: true,
+      message: 'Password Correct'
+    }
+
   };
 
   User.associate = (db) => {
