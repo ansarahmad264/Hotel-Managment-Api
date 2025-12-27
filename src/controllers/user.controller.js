@@ -68,3 +68,14 @@ export const loginUser = async ( req, res) => {
         data: userData
     })
 }
+
+export const getAllUsers = async(req, res) => {
+
+    const response = await db.User.findAll();
+
+    return res.json({
+        status: 200,
+        sucess: true,
+        data: response
+    })
+}

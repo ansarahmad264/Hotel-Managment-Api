@@ -1,4 +1,4 @@
-// models/Order.js
+// src/models/Order.js
 export default (sequelize, DataTypes) => {
   const Order = sequelize.define(
     "Order",
@@ -27,6 +27,11 @@ export default (sequelize, DataTypes) => {
       totalPrice: {
         type: DataTypes.DECIMAL(10, 2),
         defaultValue: 0,
+      },
+      // new: group id to link split orders from single checkout
+      checkoutSession: {
+        type: DataTypes.UUID,
+        allowNull: false,
       },
     },
     {

@@ -1,78 +1,62 @@
-// src/controller/order.controller.js
+// src/controllers/order.controller.js
 import OrderService from "../service/order.service.js";
 
-/**
- * User: place an order using a cart
- * Route example: POST /orders/from-cart/:cartId
- * Body: { deliveryAddress: "..." }
- */
-export const placeOrderFromCart = async (req, res) => {
+export const checkout = async (req, res) => {
   try {
-    const { cartId } = req.params;
-    const { deliveryAddress } = req.body;
+    // Expect body: { userId, deliveryAddress, cartItems: [{ foodItemId, quantity }] }
+    const payload = {
+      userId: req.body.userId,
+      deliveryAddress: req.body.deliveryAddress || req.body.address || req.body.delivery_address,
+      cartItems: req.body.cartItems || req.body.items || [],
+    };
 
-    // Assumes user auth middleware sets req.user
-    const userId = req.user.id;
-
-    const response = await OrderService.createOrderFromCart(
-      cartId,
-      userId,
-      deliveryAddress
-    );
+    const response = await OrderService.checkout(payload);
 
     return res.status(response.statusCode).json(response);
-  } catch (error) {
-    console.error("Could not place order from cart", error);
-
-    return res.status(500).json({
-      success: false,
-      statusCode: 500,
-      message: "Internal server error",
-    });
+  } catch (err) {
+    console.error("checkout controller error:", err);
+    return res.status(500).json({ success: false, statusCode: 500, message: "Internal server error" });
   }
 };
 
-/**
- * Restaurant: get all orders for this restaurant
- * Route example: GET /restaurant/orders
- */
 export const getRestaurantOrders = async (req, res) => {
   try {
-    // Assumes restaurant auth middleware sets req.restaurant
-    const restaurantId = req.restaurant.id;
+    // verifyJWT in routes should set req.restaurant or req.user. Accept either.
+    const restaurantId = req.restaurant?.id || req.user?.id;
+    const { status } = req.query;
 
-    const response = await OrderService.getOrdersForRestaurant(restaurantId);
+    const response = await OrderService.getOrdersByRestaurant(restaurantId, { status });
 
     return res.status(response.statusCode).json(response);
-  } catch (error) {
-    console.error("Could not get restaurant orders", error);
-
-    return res.status(500).json({
-      success: false,
-      statusCode: 500,
-      message: "Internal server error",
-    });
+  } catch (err) {
+    console.error("getRestaurantOrders error:", err);
+    return res.status(500).json({ success: false, statusCode: 500, message: "Internal server error" });
   }
 };
 
-/**
- * User: get all their orders
- * Route example: GET /orders/my
- */
-export const getUserOrders = async (req, res) => {
+export const updateOrderStatus = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const restaurantId = req.restaurant?.id || req.user?.id;
+    const { orderId } = req.params;
+    const { status } = req.body;
 
-    const response = await OrderService.getOrdersForUser(userId);
+    const response = await OrderService.updateOrderStatus(restaurantId, orderId, status);
 
     return res.status(response.statusCode).json(response);
-  } catch (error) {
-    console.error("Could not get user orders", error);
+  } catch (err) {
+    console.error("updateOrderStatus error:", err);
+    return res.status(500).json({ success: false, statusCode: 500, message: "Internal server error" });
+  }
+};
 
-    return res.status(500).json({
-      success: false,
-      statusCode: 500,
-      message: "Internal server error",
-    });
+export const getUserOrders = async (req, res) => {
+  try {
+    const userId = req.params.userId || req.query.userId || req.body.userId;
+    const response = await OrderService.getOrdersByUser(userId);
+
+    return res.status(response.statusCode).json(response);
+  } catch (err) {
+    console.error("getUserOrders error:", err);
+    return res.status(500).json({ success: false, statusCode: 500, message: "Internal server error" });
   }
 };

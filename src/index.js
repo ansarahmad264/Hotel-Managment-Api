@@ -29,10 +29,10 @@ app.use(cors({
 
 app.use(cookieParser())
 
-app.use('/v1/api', restaurantRouter)
-app.use('/v1/api', orderRouter)
-app.use('/v1/api', cartRouter)
-app.use('/v1/api', userRoutes)
+app.use('/v1/api/restaurant', restaurantRouter)
+app.use('/v1/api/order', orderRouter)
+app.use('/v1/api/cart', cartRouter)
+app.use('/v1/api/user', userRoutes)
 
 
 connectDb()

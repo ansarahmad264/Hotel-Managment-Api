@@ -1,185 +1,199 @@
 // src/service/order.service.js
 import db from "../models/index.js";
+import { randomUUID } from "crypto";
 
 export default class OrderService {
   /**
-   * Create an order from a cart
-   * @param {number} cartId
-   * @param {number} userId - must match the cart's userId
-   * @param {string} deliveryAddress
+   * Checkout payload expected:
+   * {
+   *   userId: number,
+   *   phone: string,                // optional for now - used for records if needed
+   *   deliveryAddress: string,
+   *   cartItems: [{ foodItemId: number, quantity: number }]
+   * }
+   *
+   * Returns { success, statusCode, data: { checkoutSession, orders: [...] } }
    */
-  static async createOrderFromCart(cartId, userId, deliveryAddress) {
+  static async checkout(payload) {
+    const { userId, deliveryAddress, cartItems } = payload;
+
+    if (!userId) {
+      return { success: false, statusCode: 400, message: "userId is required" };
+    }
+    if (!deliveryAddress) {
+      return { success: false, statusCode: 400, message: "deliveryAddress is required" };
+    }
+    if (!Array.isArray(cartItems) || cartItems.length === 0) {
+      return { success: false, statusCode: 400, message: "cartItems must be a non-empty array" };
+    }
+
+    // Unique food item ids
+    const foodItemIds = [...new Set(cartItems.map((c) => c.foodItemId))];
+
+    // Load food items
+    const foodItems = await db.FoodItem.findAll({
+      where: { id: foodItemIds },
+    });
+
+    if (foodItems.length !== foodItemIds.length) {
+      const foundIds = new Set(foodItems.map((f) => f.id));
+      const missing = foodItemIds.filter((id) => !foundIds.has(id));
+      return {
+        success: false,
+        statusCode: 400,
+        message: `Some items not found: ${missing.join(", ")}`,
+      };
+    }
+
+    // Map food items by id
+    const foodMap = {};
+    for (const f of foodItems) {
+      foodMap[f.id] = f;
+    }
+
+    // Group cart items by restaurantId
+    const groups = {}; // restaurantId -> [{ foodItem, quantity }]
+    for (const ci of cartItems) {
+      const fi = foodMap[ci.foodItemId];
+      const qty = Number(ci.quantity) || 1;
+      if (!groups[fi.restaurantId]) groups[fi.restaurantId] = [];
+      groups[fi.restaurantId].push({
+        foodItem: fi,
+        quantity: qty,
+      });
+    }
+
+    const checkoutSession = randomUUID();
+
+    // Run in a transaction
+    const resultOrders = [];
+
+    const transaction = await db.sequelize.transaction();
     try {
-      const cart = await db.Cart.findByPk(cartId);
+      for (const [restaurantId, items] of Object.entries(groups)) {
+        // compute total for this restaurant
+        let total = 0;
+        const orderItemsPayload = [];
+        for (const it of items) {
+          const unitPrice = parseFloat(it.foodItem.price);
+          const qty = Number(it.quantity);
+          total += unitPrice * qty;
+          orderItemsPayload.push({
+            foodItemId: it.foodItem.id,
+            quantity: qty,
+            unitPrice: unitPrice.toFixed(2),
+            foodName: it.foodItem.name,
+          });
+        }
 
-      if (!cart) {
-        return {
-          success: false,
-          statusCode: 404,
-          message: "Cart not found",
-        };
-      }
-
-      if (cart.userId !== userId) {
-        return {
-          success: false,
-          statusCode: 403,
-          message: "You are not allowed to place order for this cart",
-        };
-      }
-
-      if (cart.status !== "ACTIVE") {
-        return {
-          success: false,
-          statusCode: 400,
-          message: "Cart is not active",
-        };
-      }
-
-      const items = cart.items || [];
-
-      if (!items.length) {
-        return {
-          success: false,
-          statusCode: 400,
-          message: "Cart is empty",
-        };
-      }
-
-      // Recalculate totalPrice to be safe
-      let totalPrice = 0;
-      for (const item of items) {
-        const qty = Number(item.quantity || 1);
-        const price = Number(item.unitPrice || 0);
-        totalPrice += qty * price;
-      }
-
-      // Create order
-      const order = await db.Order.create({
-        userId,
-        restaurantId: cart.restaurantId,
-        deliveryAddress,
-        totalPrice,
-        status: "PENDING",
-      });
-
-      // Create order items
-      const orderItemsPayload = items.map((item) => ({
-        orderId: order.id,
-        foodItemId: item.foodItemId,
-        quantity: item.quantity || 1,
-        unitPrice: item.unitPrice,
-      }));
-
-      await db.OrderItem.bulkCreate(orderItemsPayload);
-
-      // Mark cart as ORDERED
-      cart.status = "ORDERED";
-      await cart.save();
-
-      // Fetch full order with relations
-      const fullOrder = await db.Order.findByPk(order.id, {
-        include: [
+        // create order record
+        const order = await db.Order.create(
           {
-            model: db.OrderItem,
-            as: "items",
-            include: [{ model: db.FoodItem, as: "foodItem" }],
+            userId,
+            restaurantId: Number(restaurantId),
+            deliveryAddress,
+            status: "PENDING",
+            totalPrice: total.toFixed(2),
+            checkoutSession,
           },
-          { model: db.User, as: "user", attributes: ["id", "name", "email"] },
-          {
-            model: db.Restaurant,
-            as: "restaurant",
-            attributes: ["id", "name", "email"],
-          },
-        ],
-      });
+          { transaction }
+        );
+
+        // attach orderId to order items and bulk create
+        const orderItemsToCreate = orderItemsPayload.map((oi) => ({
+          ...oi,
+          orderId: order.id,
+        }));
+
+        await db.OrderItem.bulkCreate(orderItemsToCreate, { transaction });
+
+        // fetch items to include in result for convenience
+        const createdItems = await db.OrderItem.findAll({
+          where: { orderId: order.id },
+          transaction,
+        });
+
+        resultOrders.push({
+          order: order.toJSON(),
+          items: createdItems.map((i) => i.toJSON()),
+        });
+      }
+
+      await transaction.commit();
 
       return {
         success: true,
         statusCode: 201,
-        message: "Order placed successfully",
-        data: fullOrder,
+        data: {
+          checkoutSession,
+          orders: resultOrders,
+        },
       };
-    } catch (error) {
-      console.error("Error in OrderService.createOrderFromCart:", error);
-
+    } catch (err) {
+      await transaction.rollback();
+      console.error("OrderService.checkout error:", err);
       return {
         success: false,
         statusCode: 500,
-        message: "Internal server error",
+        message: "Internal server error during checkout",
       };
     }
   }
 
-  /**
-   * Get all orders for a restaurant
-   */
-  static async getOrdersForRestaurant(restaurantId) {
-    try {
-      const orders = await db.Order.findAll({
-        where: { restaurantId },
-        include: [
-          {
-            model: db.OrderItem,
-            as: "items",
-            include: [{ model: db.FoodItem, as: "foodItem" }],
-          },
-          { model: db.User, as: "user", attributes: ["id", "name", "email"] },
-        ],
-        order: [["createdAt", "DESC"]],
-      });
-
-      return {
-        success: true,
-        statusCode: 200,
-        data: orders,
-      };
-    } catch (error) {
-      console.error("Error in OrderService.getOrdersForRestaurant:", error);
-
-      return {
-        success: false,
-        statusCode: 500,
-        message: "Internal server error",
-      };
+  // Fetch orders for a given restaurant (only their orders)
+  static async getOrdersByRestaurant(restaurantId, { status } = {}) {
+    if (!restaurantId) {
+      return { success: false, statusCode: 400, message: "restaurantId is required" };
     }
+
+    const where = { restaurantId };
+    if (status) where.status = status;
+
+    const orders = await db.Order.findAll({
+      where,
+      include: [
+        { model: db.OrderItem, as: "items" },
+        { model: db.User, as: "user", attributes: ["id", "name", "email"] },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    return { success: true, statusCode: 200, data: orders };
   }
 
-  /**
-   * Get all orders for a user
-   */
-  static async getOrdersForUser(userId) {
-    try {
-      const orders = await db.Order.findAll({
-        where: { userId },
-        include: [
-          {
-            model: db.OrderItem,
-            as: "items",
-            include: [{ model: db.FoodItem, as: "foodItem" }],
-          },
-          {
-            model: db.Restaurant,
-            as: "restaurant",
-            attributes: ["id", "name", "email"],
-          },
-        ],
-        order: [["createdAt", "DESC"]],
-      });
-
-      return {
-        success: true,
-        statusCode: 200,
-        data: orders,
-      };
-    } catch (error) {
-      console.error("Error in OrderService.getOrdersForUser:", error);
-
-      return {
-        success: false,
-        statusCode: 500,
-        message: "Internal server error",
-      };
+  // Update order status by restaurant (restaurant must own the order)
+  static async updateOrderStatus(restaurantId, orderId, status) {
+    if (!restaurantId || !orderId) {
+      return { success: false, statusCode: 400, message: "restaurantId and orderId are required" };
     }
+
+    const order = await db.Order.findOne({ where: { id: orderId, restaurantId } });
+    if (!order) {
+      return { success: false, statusCode: 404, message: "Order not found for this restaurant" };
+    }
+
+    if (!["PENDING", "CONFIRMED", "DELIVERED", "CANCELLED"].includes(status)) {
+      return { success: false, statusCode: 400, message: "Invalid status" };
+    }
+
+    order.status = status;
+    await order.save();
+
+    return { success: true, statusCode: 200, data: order };
+  }
+
+  // Fetch all orders of a user (useful for mobile)
+  static async getOrdersByUser(userId) {
+    if (!userId) {
+      return { success: false, statusCode: 400, message: "userId is required" };
+    }
+
+    const orders = await db.Order.findAll({
+      where: { userId },
+      include: [{ model: db.OrderItem, as: "items" }, { model: db.Restaurant, as: "restaurant" }],
+      order: [["createdAt", "DESC"]],
+    });
+
+    return { success: true, statusCode: 200, data: orders };
   }
 }

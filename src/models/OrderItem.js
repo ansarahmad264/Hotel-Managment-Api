@@ -1,4 +1,4 @@
-// models/OrderItem.js
+// src/models/OrderItem.js
 export default (sequelize, DataTypes) => {
   const OrderItem = sequelize.define(
     "OrderItem",
@@ -22,6 +22,11 @@ export default (sequelize, DataTypes) => {
       },
       unitPrice: {
         type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+      },
+      // snapshot of the food name at time of order
+      foodName: {
+        type: DataTypes.STRING(200),
         allowNull: false,
       },
     },
