@@ -23,7 +23,7 @@ db.Order = OrderModel(sequelize, DataTypes);
 db.OrderItem = OrderItemModel(sequelize, DataTypes);
 db.itemCart = itemCartModel(sequelize,DataTypes);
 
-await db.sequelize.sync();  
+await db.sequelize.sync({ alter: true });  // IMPORTANT
 console.log("All models synchronized");
 
 // Run associations
