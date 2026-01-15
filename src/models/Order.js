@@ -31,7 +31,7 @@ export default (sequelize, DataTypes) => {
       // new: group id to link split orders from single checkout
       checkoutSession: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
       },
     },
     {
